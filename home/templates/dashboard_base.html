@@ -1,0 +1,280 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Dashboard{% endblock %} — EleStore Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    {% block extra_head %}{% endblock %}
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --red: #d10024; --red-dark: #a8001d; --red-soft: #fff0f2;
+        --sidebar: #0f1117; --bg: #f4f6fb; --card: #fff;
+        --text: #1e2230; --muted: #8a94a6; --border: #e8eaf0;
+        --green: #10b981; --amber: #f59e0b; --blue: #3b82f6; --purple: #8b5cf6;
+        --font: "Be Vietnam Pro", sans-serif; --radius: 12px; --shadow: 0 2px 14px rgba(0,0,0,.07);
+      }
+      body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+      /* ── SIDEBAR ── */
+      .sidebar { width: 230px; min-height: 100vh; background: var(--sidebar); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; z-index: 100; }
+      .sidebar-logo { padding: 20px 18px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
+      .logo-icon { width: 36px; height: 36px; background: var(--red); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+      .logo-text { font-size: 16px; font-weight: 800; color: #fff; }
+      .logo-sub { font-size: 10px; color: rgba(255,255,255,.35); }
+      .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+      .nav-sec { font-size: 9.5px; font-weight: 700; color: rgba(255,255,255,.25); letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 8px 5px; }
+      .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 8px; text-decoration: none; color: rgba(255,255,255,.5); font-size: 13px; font-weight: 500; transition: all .2s; margin-bottom: 1px; }
+      .nav-item i { width: 16px; text-align: center; font-size: 13px; }
+      .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+      .nav-item.active { background: var(--red); color: #fff; }
+      .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px; }
+      .nav-item.active .nav-badge { background: rgba(255,255,255,.25); }
+      .sidebar-footer { padding: 14px; border-top: 1px solid rgba(255,255,255,.07); }
+      .s-user { display: flex; align-items: center; gap: 9px; }
+      .s-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+      .s-name { font-size: 12.5px; font-weight: 600; color: #fff; }
+      .s-role { font-size: 10.5px; color: rgba(255,255,255,.35); }
+
+      /* ── MAIN ── */
+      .main { margin-left: 230px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+      .topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; height: 62px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+      .topbar h1 { font-size: 18px; font-weight: 800; color: var(--text); }
+      .topbar p { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+      .topbar-right { display: flex; align-items: center; gap: 10px; }
+      .t-btn { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; text-decoration: none; transition: all .2s; position: relative; }
+      .t-btn:hover { background: var(--bg); color: var(--text); }
+      .t-btn .dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 2px solid #fff; }
+      .content { padding: 22px 24px; flex: 1; }
+
+      /* ── FLASH MESSAGES ── */
+      .flash-wrap { padding: 0 24px; margin-top: 14px; }
+      .flash { padding: 11px 16px; border-radius: 9px; font-size: 13px; font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+      .flash-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+      .flash-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+      .flash-warning { background: #fffbeb; color: #92400e; border: 1px solid #fed7aa; }
+
+      /* ── CARD ── */
+      .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
+      .card-header { padding: 16px 20px 13px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+      .card-title { font-size: 14.5px; font-weight: 700; color: var(--text); }
+      .card-body { padding: 18px 20px; }
+
+      /* ── TABLE ── */
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      thead th { padding: 9px 14px; text-align: left; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; background: var(--bg); border-bottom: 1px solid var(--border); }
+      tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+      tbody tr:last-child { border-bottom: none; }
+      tbody tr:hover { background: #fafbff; }
+      tbody td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
+
+      /* ── BUTTONS ── */
+      .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all .2s; }
+      .btn-primary { background: var(--red); color: #fff; }
+      .btn-primary:hover { background: var(--red-dark); color: #fff; }
+      .btn-ghost { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+      .btn-ghost:hover { background: var(--border); color: var(--text); }
+      .btn-danger { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+      .btn-danger:hover { background: #b91c1c; color: #fff; }
+      .btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 6px; }
+      .btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; }
+
+      /* ── FORM ── */
+      .form-group { margin-bottom: 18px; }
+      .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+      .form-control { width: 100%; padding: 9px 13px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 13.5px; color: var(--text); background: #fff; transition: border .2s; }
+      .form-control:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(209,0,36,.08); }
+      .form-row { display: grid; gap: 16px; }
+      .form-row-2 { grid-template-columns: 1fr 1fr; }
+      .form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+      textarea.form-control { resize: vertical; min-height: 100px; }
+      select.form-control { cursor: pointer; }
+
+      /* ── STATUS PILLS ── */
+      .pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; }
+      .pill-new { background: #fff7ed; color: #c2410c; }
+      .pill-accept { background: #eff6ff; color: #1d4ed8; }
+      .pill-prepare { background: #fefce8; color: #a16207; }
+      .pill-ship { background: #f0fdf4; color: #166534; }
+      .pill-done { background: #dcfce7; color: #166534; }
+      .pill-cancel { background: #fef2f2; color: #b91c1c; }
+      .pill-read { background: #f0fdf4; color: #166534; }
+      .pill-closed { background: #f1f5f9; color: #64748b; }
+      .pill-active { background: #dcfce7; color: #166534; }
+      .pill-inactive { background: #fef2f2; color: #b91c1c; }
+
+      /* ── PAGE HEADER ── */
+      .page-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+      .page-top h2 { font-size: 17px; font-weight: 800; color: var(--text); }
+      .page-top p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+      /* ── SEARCH BAR ── */
+      .search-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+      .search-input { flex: 1; max-width: 320px; padding: 8px 13px 8px 36px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font); font-size: 13px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a94a6' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 11px center; }
+      .search-input:focus { outline: none; border-color: var(--red); }
+
+      /* ── MISC ── */
+      .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 13px; }
+      .empty-state i { font-size: 32px; margin-bottom: 10px; display: block; opacity: .3; }
+      .img-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: contain; border: 1px solid var(--border); background: #fafafa; }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+      /* ── NOTIFICATION DROPDOWN ── */
+      .notif-wrap { position: relative; }
+      .notif-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 320px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 999; overflow: hidden; }
+      .notif-dropdown.open { display: block; }
+      .notif-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; color: var(--text); }
+      .notif-count { font-size: 11px; font-weight: 600; background: var(--red); color: #fff; padding: 2px 8px; border-radius: 20px; }
+      .notif-item { display: flex; align-items: flex-start; gap: 11px; padding: 12px 16px; text-decoration: none; border-bottom: 1px solid var(--border); transition: background .15s; }
+      .notif-item:hover { background: var(--bg); }
+      .notif-icon { width: 34px; height: 34px; border-radius: 9px; background: var(--red-soft); color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+      .notif-body { flex: 1; min-width: 0; }
+      .notif-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .notif-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+      .notif-empty { padding: 24px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+      .notif-empty i { color: var(--green); margin-right: 6px; }
+      .notif-footer { display: block; text-align: center; padding: 11px; font-size: 12.5px; font-weight: 600; color: var(--red); text-decoration: none; border-top: 1px solid var(--border); background: var(--bg); }
+      .notif-footer:hover { background: var(--border); }
+    </style>
+  </head>
+  <body>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa fa-bolt"></i></div>
+      <div>
+        <div class="logo-text">EleStore</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-sec">Tổng quan</div>
+      <a href="/dashboard/" class="nav-item {% block nav_dashboard %}{% endblock %}">
+        <i class="fa fa-chart-pie"></i>Dashboard
+      </a>
+
+      <div class="nav-sec">Quản lý</div>
+      <a href="/dashboard/orders/" class="nav-item {% block nav_orders %}{% endblock %}">
+        <i class="fa fa-bag-shopping"></i>Đơn hàng
+        {% if pending_orders > 0 %}<span class="nav-badge">{{ pending_orders }}</span>{% endif %}
+      </a>
+      <a href="/dashboard/products/" class="nav-item {% block nav_products %}{% endblock %}">
+        <i class="fa fa-box"></i>Sản phẩm
+      </a>
+      <a href="/dashboard/users/" class="nav-item {% block nav_users %}{% endblock %}">
+        <i class="fa fa-users"></i>Người dùng
+      </a>
+      <a href="/dashboard/messages/" class="nav-item {% block nav_messages %}{% endblock %}">
+        <i class="fa fa-envelope"></i>Tin nhắn
+        {% if new_messages > 0 %}<span class="nav-badge">{{ new_messages }}</span>{% endif %}
+      </a>
+      <a href="/dashboard/banners/" class="nav-item {% block nav_banners %}{% endblock %}">
+        <i class="fa fa-image"></i>Banner
+      </a>
+      <a href="/dashboard/reviews/" class="nav-item {% block nav_reviews %}{% endblock %}">
+        <i class="fa fa-star"></i>Đánh giá
+      </a>
+
+      <div class="nav-sec">Khác</div>
+      <a href="/" class="nav-item" target="_blank"><i class="fa fa-globe"></i>Xem trang chủ</a>
+      <a href="/dashboard-logout/" class="nav-item"><i class="fa fa-right-from-bracket"></i>Đăng xuất</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="s-user">
+        <div class="s-avatar">{{ request.user.username|first|upper }}</div>
+        <div>
+          <div class="s-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div class="s-role">{% if request.user.is_superuser %}Quản trị viên{% else %}Nhân viên{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+        <p>{% block page_sub %}{% endblock %}</p>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Nút Tin nhắn -->
+        <a href="/dashboard/messages/" class="t-btn" title="Tin nhắn">
+          <i class="fa fa-envelope"></i>
+          {% if new_messages > 0 %}<span class="dot"></span>{% endif %}
+        </a>
+
+        <!-- Nút Chuông thông báo đơn hàng -->
+        <div class="notif-wrap" id="notifWrap">
+          <button class="t-btn" id="notifBtn" title="Đơn hàng mới" onclick="toggleNotif(event)">
+            <i class="fa fa-bell"></i>
+            {% if pending_orders > 0 %}<span class="dot"></span>{% endif %}
+          </button>
+
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-header">
+              <span><i class="fa fa-bell"></i> Đơn hàng mới</span>
+              <span class="notif-count">{{ pending_orders }} chờ xử lý</span>
+            </div>
+
+            {% if notify_orders %}
+              {% for order in notify_orders %}
+              <a href="/dashboard/orders/{{ order.id }}/" class="notif-item">
+                <div class="notif-icon"><i class="fa fa-bag-shopping"></i></div>
+                <div class="notif-body">
+                  <div class="notif-title">Đơn #{{ order.code }} — {{ order.first_name }} {{ order.last_name }}</div>
+                  <div class="notif-sub">{{ order.total|floatformat:0 }} VND · {{ order.create_at|timesince }} trước</div>
+                </div>
+              </a>
+              {% endfor %}
+            {% else %}
+              <div class="notif-empty">
+                <i class="fa fa-check-circle"></i> Không có đơn hàng mới
+              </div>
+            {% endif %}
+
+            <a href="/dashboard/orders/" class="notif-footer">Xem tất cả đơn hàng →</a>
+          </div>
+        </div>
+        <!-- Kết thúc Nút Chuông -->
+
+      </div>
+    </div>
+
+    {% if messages %}
+    <div class="flash-wrap">
+      {% for msg in messages %}
+      <div class="flash flash-{% if msg.tags == 'error' %}error{% elif msg.tags == 'warning' %}warning{% else %}success{% endif %}">
+        <i class="fa fa-{% if msg.tags == 'error' %}circle-xmark{% elif msg.tags == 'warning' %}triangle-exclamation{% else %}circle-check{% endif %}"></i>
+        {{ msg }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  {% block extra_js %}{% endblock %}
+  <script>
+    function toggleNotif(e) {
+      e.stopPropagation();
+      document.getElementById("notifDropdown").classList.toggle("open");
+    }
+    document.addEventListener("click", function (e) {
+      if (!document.getElementById("notifWrap").contains(e.target)) {
+        document.getElementById("notifDropdown").classList.remove("open");
+      }
+    });
+  </script>
+  </body>
+</html>

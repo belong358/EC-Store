@@ -1,0 +1,257 @@
+{% extends 'homebase.html' %}
+{% load static %}
+{% block title %}Giới thiệu — {{ setting.title }}{% endblock %}
+{% block description %}{{ setting.description }}{% endblock %}
+{% block keywords %}{{ setting.keywords }}{% endblock %}
+
+{% block body %}
+<style>
+/* ── BREADCRUMB ── */
+.about-breadcrumb{background:#f8f9fb;border-bottom:1px solid #eee;padding:10px 0}
+.about-breadcrumb ul{list-style:none;display:flex;gap:6px;align-items:center;margin:0;padding:0;font-size:12.5px;color:#888}
+.about-breadcrumb li+li::before{content:'›';margin-right:6px;color:#ccc}
+.about-breadcrumb a{color:#888;text-decoration:none}.about-breadcrumb a:hover{color:#d10024}
+.about-breadcrumb li.active{color:#d10024;font-weight:600}
+
+/* ── HERO ── */
+.about-hero{background:linear-gradient(135deg,#0f1117 0%,#1a1f2e 55%,#2d0008 100%);padding:72px 0 64px;text-align:center;position:relative;overflow:hidden}
+.about-hero::before{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(209,0,36,.2) 0%,transparent 65%);pointer-events:none}
+.about-hero::after{content:'';position:absolute;bottom:-60px;left:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(209,0,36,.12) 0%,transparent 65%);pointer-events:none}
+.about-hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(209,0,36,.15);border:1px solid rgba(209,0,36,.3);color:#ff6b7a;font-size:11.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:18px;position:relative}
+.about-hero h1{font-size:44px;font-weight:900;color:#fff;line-height:1.15;margin-bottom:16px;position:relative}
+.about-hero h1 span{color:#d10024}
+.about-hero p{font-size:15px;color:rgba(255,255,255,.55);max-width:560px;margin:0 auto;line-height:1.7;position:relative}
+
+/* ── STATS ── */
+.stats-section{background:#fff;border-bottom:1px solid #eee}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);text-align:center}
+.stat-item{padding:32px 20px;border-right:1px solid #f0f0f0;transition:background .2s}
+.stat-item:last-child{border-right:none}
+.stat-item:hover{background:#fff8f8}
+.stat-num{font-size:36px;font-weight:900;color:#d10024;line-height:1;margin-bottom:6px}
+.stat-num sup{font-size:18px}
+.stat-lbl{font-size:12.5px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+
+/* ── ABOUT CONTENT ── */
+.about-content-section{padding:64px 0}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.about-text-eyebrow{font-size:11px;font-weight:800;color:#d10024;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.about-text h2{font-size:30px;font-weight:900;color:#0f1117;line-height:1.25;margin-bottom:16px}
+.about-text p{font-size:14.5px;color:#555;line-height:1.8;margin-bottom:14px}
+.about-text p:last-of-type{margin-bottom:0}
+.about-img-wrap{position:relative}
+.about-img-main{width:100%;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.12);display:block;background:linear-gradient(135deg,#0f1117,#1a1f2e);min-height:340px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.about-img-main .big-icon{font-size:100px;color:rgba(209,0,36,.25)}
+.about-img-badge{position:absolute;bottom:-16px;right:-16px;background:#d10024;color:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 8px 24px rgba(209,0,36,.35);text-align:center}
+.about-img-badge strong{display:block;font-size:26px;font-weight:900;line-height:1}
+.about-img-badge span{font-size:11px;font-weight:600;opacity:.85}
+
+/* ── VALUES ── */
+.values-section{background:#f8f9fb;padding:64px 0}
+.section-title-center{text-align:center;margin-bottom:44px}
+.section-eyebrow{font-size:11px;font-weight:800;color:#d10024;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.section-title-center h2{font-size:28px;font-weight:900;color:#0f1117;margin-bottom:10px}
+.section-title-center p{font-size:14px;color:#888;max-width:480px;margin:0 auto}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.value-card{background:#fff;border-radius:14px;padding:28px 24px;border:1px solid #eee;box-shadow:0 2px 12px rgba(0,0,0,.04);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.value-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#d10024;transform:scaleX(0);transition:transform .3s;transform-origin:left}
+.value-card:hover{transform:translateY(-4px);box-shadow:0 10px 32px rgba(0,0,0,.09)}
+.value-card:hover::before{transform:scaleX(1)}
+.value-icon{width:52px;height:52px;background:#fff0f2;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#d10024;margin-bottom:16px}
+.value-card h3{font-size:15px;font-weight:800;color:#0f1117;margin-bottom:8px}
+.value-card p{font-size:13px;color:#777;line-height:1.7;margin:0}
+
+/* ── COMMITMENT ── */
+.commit-section{padding:64px 0;background:#fff}
+.commit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.commit-item{text-align:center;padding:24px 16px}
+.commit-step{width:44px;height:44px;background:#d10024;border-radius:50%;color:#fff;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.commit-item h4{font-size:14px;font-weight:800;color:#0f1117;margin-bottom:6px}
+.commit-item p{font-size:12.5px;color:#888;line-height:1.6;margin:0}
+
+/* ── CTA ── */
+.about-cta{background:linear-gradient(135deg,#d10024 0%,#a8001d 100%);padding:52px 0;text-align:center}
+.about-cta h2{font-size:26px;font-weight:900;color:#fff;margin-bottom:10px}
+.about-cta p{font-size:14px;color:rgba(255,255,255,.75);margin-bottom:28px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-cta-white{background:#fff;color:#d10024;padding:12px 28px;border-radius:9px;font-size:14px;font-weight:800;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-cta-white:hover{background:#fff0f2;color:#a8001d}
+.btn-cta-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5);padding:12px 28px;border-radius:9px;font-size:14px;font-weight:700;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-cta-outline:hover{background:rgba(255,255,255,.1);border-color:#fff;color:#fff}
+
+/* ── ABOUTUS CONTENT (từ DB) ── */
+.db-content{font-size:14.5px;color:#555;line-height:1.8}
+.db-content:empty{display:none}
+
+@media(max-width:900px){
+  .about-grid{grid-template-columns:1fr;gap:32px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .values-grid{grid-template-columns:1fr}
+  .commit-grid{grid-template-columns:1fr 1fr}
+  .about-hero h1{font-size:32px}
+}
+@media(max-width:500px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .commit-grid{grid-template-columns:1fr}
+}
+</style>
+
+<!-- BREADCRUMB -->
+<div class="about-breadcrumb">
+  <div class="container">
+    <ul>
+      <li><a href="/">Trang chủ</a></li>
+      <li class="active">Giới thiệu</li>
+    </ul>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="about-hero">
+  <div class="container">
+    <div class="about-hero-badge"><i class="fa fa-bolt"></i> EleStore — Electronics Store</div>
+    <h1>Chuyên gia công nghệ<br>đáng tin cậy của <span>bạn</span></h1>
+    <p>Cung cấp laptop, linh kiện và phụ kiện công nghệ chính hãng, giá tốt nhất thị trường từ năm 2020</p>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-num">5<sup>+</sup></div>
+        <div class="stat-lbl">Năm hoạt động</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">500<sup>+</sup></div>
+        <div class="stat-lbl">Sản phẩm</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">10K<sup>+</sup></div>
+        <div class="stat-lbl">Khách hàng</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">98<sup>%</sup></div>
+        <div class="stat-lbl">Hài lòng</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT CONTENT -->
+<div class="about-content-section">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-text">
+        <div class="about-text-eyebrow">Câu chuyện của chúng tôi</div>
+        <h2>EleStore — Hơn cả một cửa hàng công nghệ</h2>
+        {% if setting.aboutus %}
+          <div class="db-content">{{ setting.aboutus|safe }}</div>
+        {% else %}
+          <p>EleStore ra đời với sứ mệnh mang đến cho người dùng Việt Nam những sản phẩm công nghệ chính hãng, chất lượng cao với mức giá cạnh tranh nhất.</p>
+          <p>Với đội ngũ chuyên gia giàu kinh nghiệm, chúng tôi không chỉ bán sản phẩm mà còn đồng hành cùng khách hàng trong suốt quá trình sử dụng — từ tư vấn lựa chọn, hỗ trợ kỹ thuật đến bảo hành sau mua.</p>
+          <p>Chúng tôi tin rằng mỗi sản phẩm công nghệ đều có thể thay đổi cuộc sống và công việc của bạn theo hướng tích cực hơn.</p>
+        {% endif %}
+      </div>
+      <div class="about-img-wrap">
+        <div class="about-img-main">
+          <i class="fa fa-laptop big-icon"></i>
+        </div>
+        <div class="about-img-badge">
+          <strong>2020</strong>
+          <span>Thành lập</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VALUES -->
+<div class="values-section">
+  <div class="container">
+    <div class="section-title-center">
+      <div class="section-eyebrow">Giá trị cốt lõi</div>
+      <h2>Tại sao chọn EleStore?</h2>
+      <p>Chúng tôi cam kết mang lại trải nghiệm mua sắm tốt nhất cho mọi khách hàng</p>
+    </div>
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon"><i class="fa fa-shield-halved"></i></div>
+        <h3>Hàng chính hãng 100%</h3>
+        <p>Toàn bộ sản phẩm được nhập khẩu và phân phối chính thức, có đầy đủ giấy tờ chứng nhận và tem bảo hành hợp lệ.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa fa-tag"></i></div>
+        <h3>Giá tốt nhất thị trường</h3>
+        <p>Cam kết cạnh tranh giá với mọi đối thủ. Nếu tìm được nơi rẻ hơn, chúng tôi sẽ hoàn tiền chênh lệch.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa fa-headset"></i></div>
+        <h3>Hỗ trợ 24/7</h3>
+        <p>Đội ngũ tư vấn kỹ thuật chuyên nghiệp luôn sẵn sàng giải đáp mọi thắc mắc qua hotline, chat và email.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa fa-rotate-left"></i></div>
+        <h3>Đổi trả dễ dàng</h3>
+        <p>Chính sách đổi trả trong 30 ngày không cần lý do. Hoàn tiền 100% nếu sản phẩm có lỗi từ nhà sản xuất.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa fa-truck-fast"></i></div>
+        <h3>Giao hàng nhanh chóng</h3>
+        <p>Giao hàng toàn quốc trong 2–5 ngày làm việc. Miễn phí vận chuyển cho đơn hàng từ 1 triệu đồng.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa fa-screwdriver-wrench"></i></div>
+        <h3>Bảo hành tận nơi</h3>
+        <p>Dịch vụ bảo hành và sửa chữa tận nơi tại TP.HCM. Hỗ trợ kỹ thuật từ xa cho khách hàng tỉnh thành khác.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMMITMENT STEPS -->
+<div class="commit-section">
+  <div class="container">
+    <div class="section-title-center">
+      <div class="section-eyebrow">Quy trình mua hàng</div>
+      <h2>Đơn giản — Nhanh chóng — An tâm</h2>
+    </div>
+    <div class="commit-grid">
+      <div class="commit-item">
+        <div class="commit-step">1</div>
+        <h4>Chọn sản phẩm</h4>
+        <p>Duyệt danh mục hoặc tìm kiếm theo nhu cầu, ngân sách của bạn</p>
+      </div>
+      <div class="commit-item">
+        <div class="commit-step">2</div>
+        <h4>Đặt hàng</h4>
+        <p>Thêm vào giỏ hàng và chọn phương thức thanh toán phù hợp</p>
+      </div>
+      <div class="commit-item">
+        <div class="commit-step">3</div>
+        <h4>Xác nhận đơn</h4>
+        <p>Chúng tôi xác nhận và kiểm tra hàng trước khi giao cho đơn vị vận chuyển</p>
+      </div>
+      <div class="commit-item">
+        <div class="commit-step">4</div>
+        <h4>Nhận hàng & tận hưởng</h4>
+        <p>Nhận hàng tại nhà, kiểm tra và trải nghiệm sản phẩm của bạn</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="about-cta">
+  <div class="container">
+    <h2>Sẵn sàng trải nghiệm mua sắm cùng EleStore?</h2>
+    <p>Hàng nghìn sản phẩm công nghệ chính hãng đang chờ bạn khám phá</p>
+    <div class="cta-btns">
+      <a href="/" class="btn-cta-white"><i class="fa fa-store"></i> Khám phá sản phẩm</a>
+      <a href="/contact/" class="btn-cta-outline"><i class="fa fa-paper-plane"></i> Liên hệ ngay</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

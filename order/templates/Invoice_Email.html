@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body, h1, h3, table, th, td, p, strong { font-family: "DejaVu", sans-serif; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; color: #555; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .details { margin-bottom: 20px; }
+        table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; }
+        table th { background: #eee; border-bottom: 1px solid #ddd; padding: 10px; }
+        table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .total { font-weight: bold; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="invoice-box">
+        <div class="header">
+            <h1>HÓA ĐƠN MUA HÀNG</h1>
+            <p>Mã đơn hàng: #{{ order.code }}</p>
+            <p>Ngày: {{ order.create_at|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <div class="details">
+            <p><strong>Khách hàng:</strong> {{ order.first_name }} {{ order.last_name }}</p>
+            <p><strong>Địa chỉ:</strong> {{ order.address }}, {{ order.city }}</p>
+            <p><strong>Điện thoại:</strong> {{ order.phone }}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Giá</th>
+                    <th>Tổng</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rs in order_products %}
+                <tr>
+                    <td>{{ rs.product.title }}</td>
+                    <td>{{ rs.quantity }}</td>
+                    <td>{{ rs.price|floatformat:0 }} VND</td>
+                    <td>{{ rs.amount|floatformat:0 }} VND</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total">
+            <h3>Tổng cộng: {{ order.total|floatformat:0 }} VND</h3>
+        </div>
+    </div>
+</body>
+</html>

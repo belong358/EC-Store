@@ -1,0 +1,94 @@
+{% extends 'homebase.html' %}
+{% load static %}
+{% block title %}Liên hệ — {{ setting.title }}{% endblock %}
+{% block description %}{{ setting.description }}{% endblock %}
+{% block keywords %}{{ setting.keywords }}{% endblock %}
+
+{% block body %}
+<style>
+.breadcrumb-bar{background:#f8f9fb;border-bottom:1px solid #eee;padding:10px 0}
+.breadcrumb-bar ul{list-style:none;display:flex;gap:6px;align-items:center;margin:0;padding:0;font-size:12.5px;color:#888}
+.breadcrumb-bar li+li::before{content:'›';margin-right:6px;color:#ccc}
+.breadcrumb-bar a{color:#888;text-decoration:none}
+.breadcrumb-bar a:hover{color:#d10024}
+.breadcrumb-bar li.active{color:#d10024;font-weight:600}
+
+.contact-wrap{max-width:620px;margin:40px auto 56px;padding:0 16px}
+.contact-form-box{background:#fff;border-radius:16px;border:1px solid #eee;box-shadow:0 4px 24px rgba(0,0,0,.07);overflow:hidden}
+.contact-form-head{background:linear-gradient(135deg,#d10024,#a8001d);padding:24px 30px}
+.contact-form-head h2{font-size:18px;font-weight:800;color:#fff;margin:0 0 4px}
+.contact-form-head p{font-size:12.5px;color:rgba(255,255,255,.7);margin:0}
+.contact-form-body{padding:30px}
+.cf-group{margin-bottom:18px}
+.cf-label{font-size:12px;font-weight:700;color:#555;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.6px}
+.cf-input{width:100%;padding:11px 14px;border:1.5px solid #e8eaf0;border-radius:9px;font-size:13.5px;font-family:inherit;color:#1e2230;background:#fff;transition:border .2s,box-shadow .2s;box-sizing:border-box}
+.cf-input:focus{outline:none;border-color:#d10024;box-shadow:0 0 0 3px rgba(209,0,36,.08)}
+textarea.cf-input{resize:vertical;min-height:130px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cf-submit{width:100%;padding:13px;background:#d10024;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;letter-spacing:.5px;cursor:pointer;transition:background .2s,transform .1s;margin-top:4px}
+.cf-submit:hover{background:#a8001d;transform:translateY(-1px)}
+.cf-submit:active{transform:translateY(0)}
+.alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:9px;padding:11px 16px;font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:9px;padding:11px 16px;font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+@media(max-width:500px){.cf-row{grid-template-columns:1fr}}
+</style>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb-bar">
+  <div class="container">
+    <ul>
+      <li><a href="/">Trang chủ</a></li>
+      <li class="active">Liên hệ</li>
+    </ul>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="contact-wrap">
+  <div class="contact-form-box">
+    <div class="contact-form-head">
+      <h2><i class="fa fa-paper-plane" style="margin-right:8px"></i>Gửi tin nhắn cho chúng tôi</h2>
+      <p>Điền thông tin bên dưới, chúng tôi sẽ phản hồi sớm nhất có thể</p>
+    </div>
+    <div class="contact-form-body">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="{% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+            <i class="fa {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-xmark{% endif %}"></i>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="cf-row">
+          <div class="cf-group">
+            <label class="cf-label">Họ và tên *</label>
+            <input type="text" name="name" class="cf-input" placeholder="Nhập họ và tên" required/>
+          </div>
+          <div class="cf-group">
+            <label class="cf-label">Email *</label>
+            <input type="email" name="email" class="cf-input" placeholder="Nhập địa chỉ email" required/>
+          </div>
+        </div>
+        <div class="cf-group">
+          <label class="cf-label">Tiêu đề</label>
+          <input type="text" name="subject" class="cf-input" placeholder="Ví dụ: Tư vấn sản phẩm, Hỗ trợ kỹ thuật..."/>
+        </div>
+        <div class="cf-group">
+          <label class="cf-label">Nội dung tin nhắn *</label>
+          <textarea name="message" class="cf-input" placeholder="Mô tả chi tiết vấn đề hoặc câu hỏi của bạn..." required></textarea>
+        </div>
+        <button type="submit" class="cf-submit">
+          <i class="fa fa-paper-plane" style="margin-right:8px"></i>GỬI TIN NHẮN
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

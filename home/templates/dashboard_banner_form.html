@@ -1,0 +1,114 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block nav_banners %}active{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_sub %}{% if banner %}Chỉnh sửa: {{ banner.title }}{% else %}Thêm banner mới{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-top">
+  <div><h2>{{ page_title }}</h2></div>
+  <a href="/dashboard/banners/" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Quay lại</a>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Thông tin banner</div></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Tiêu đề *</label>
+            <input type="text" name="title" class="form-control" value="{{ banner.title|default:'' }}" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mô tả</label>
+            <textarea name="description" class="form-control" rows="3">{{ banner.description|default:'' }}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Liên kết (URL)</label>
+            <input type="text" name="link" class="form-control" value="{{ banner.link|default:'' }}" placeholder="/product/ hoặc https://..."/>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Thời gian hiển thị</div></div>
+        <div class="card-body">
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label">Bắt đầu</label>
+              <input type="datetime-local" name="start_at" class="form-control" value="{{ start_at_fmt|default:'' }}"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kết thúc</label>
+              <input type="datetime-local" name="end_at" class="form-control" value="{{ end_at_fmt|default:'' }}"/>
+            </div>
+          </div>
+          <p style="font-size:11.5px;color:var(--muted);margin-top:4px">
+            <i class="fa fa-circle-info"></i> Banner chỉ hiển thị trong khoảng thời gian trên. Hãy đặt ngày kết thúc trong tương lai.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Ảnh banner</div></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Chọn ảnh</label>
+            <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImg(this)"/>
+          </div>
+          {% if banner and banner.image %}
+          <img src="{{ banner.image.url }}" id="imgPreview" style="width:100%;border-radius:9px;border:1px solid var(--border);object-fit:cover;max-height:140px"/>
+          {% else %}
+          <div id="imgPreview" style="display:none;width:100%;border-radius:9px;border:2px dashed var(--border);height:120px;align-items:center;justify-content:center;color:var(--muted);font-size:13px"></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Cài đặt</div></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Hiển thị</label>
+            <select name="status" class="form-control">
+              <option value="True" {% if not banner or banner.status == 'True' %}selected{% endif %}>Hiển thị</option>
+              <option value="False" {% if banner and banner.status == 'False' %}selected{% endif %}>Ẩn</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:12px">
+        <i class="fa fa-{% if banner %}check{% else %}plus{% endif %}"></i>
+        {% if banner %}Lưu thay đổi{% else %}Thêm banner{% endif %}
+      </button>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewImg(input) {
+  const el = document.getElementById('imgPreview');
+  if (input.files && input.files[0]) {
+    el.src = URL.createObjectURL(input.files[0]);
+    el.style.display = 'block';
+    if (el.tagName === 'DIV') {
+      const img = document.createElement('img');
+      img.style = 'width:100%;border-radius:9px;object-fit:cover;max-height:140px';
+      img.src = URL.createObjectURL(input.files[0]);
+      el.parentNode.replaceChild(img, el);
+      img.id = 'imgPreview';
+    }
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,431 @@
+{% extends 'homebase.html' %}
+{% load static %}
+{% load humanize %}
+{% load product_filters %}
+
+{% block title %} So sánh sản phẩm - {{ setting.title }} {% endblock %}
+
+{% block body %}
+<div id="breadcrumb" class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="breadcrumb-tree">
+          <li><a href="/">Trang chủ</a></li>
+          <li class="active">So sánh sản phẩm</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container-fluid" style="padding: 0 20px;">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="section-title text-center">
+          <h3 class="title">So sánh sản phẩm</h3>
+          <p class="text-muted">
+            Xem xét kỹ lưỡng các thông số để đưa ra quyết định tốt nhất
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {% if products %}
+    <!-- AI Comparison Summary -->
+    {% if ai_summary %}
+    <div class="row" style="margin-bottom: 40px">
+      <div class="col-md-12">
+        <div class="ai-summary-card">
+          <div class="ai-summary-header">
+            <i class="fa fa-magic"></i>
+            <h4>AI Phân tích & Tư vấn thông minh</h4>
+          </div>
+          <div class="ai-summary-body">{{ ai_summary|linebreaks }}</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="compare-wrapper">
+          <table class="table compare-table">
+            <thead>
+              <tr>
+                <th class="sticky-col first-col-header">
+                  <div class="header-label">Đặc điểm so sánh</div>
+                </th>
+                {% for p in products %}
+                <th class="product-header">
+                  <div class="product-info-box">
+                    <a
+                      href="/product/compare/remove/{{ p.id }}/"
+                      class="btn-remove-compare"
+                      title="Xóa khỏi danh sách"
+                    >
+                      <i class="fa fa-times-circle"></i>
+                    </a>
+                    <div class="product-img">
+                      <img src="{{ p.image.url }}" alt="{{ p.title }}" />
+                    </div>
+                    <div class="product-details">
+                      <h5 class="product-name">
+                        <a href="/product/{{ p.id }}/{{ p.slug }}"
+                          >{{ p.title }}</a
+                        >
+                      </h5>
+                      <div class="product-price">
+                        {{ p.price|floatformat:0|intcomma }} <small>VND</small>
+                      </div>
+                      <div class="product-rating">
+                        <div class="rating-stars">
+                          <i
+                            class="fa fa-star{% if p.avaregereview < 1 %}-o empty{% endif %}"
+                          ></i>
+                          <i
+                            class="fa fa-star{% if p.avaregereview < 2 %}-o empty{% endif %}"
+                          ></i>
+                          <i
+                            class="fa fa-star{% if p.avaregereview < 3 %}-o empty{% endif %}"
+                          ></i>
+                          <i
+                            class="fa fa-star{% if p.avaregereview < 4 %}-o empty{% endif %}"
+                          ></i>
+                          <i
+                            class="fa fa-star{% if p.avaregereview < 5 %}-o empty{% endif %}"
+                          ></i>
+                        </div>
+                        <span>({{ p.countreview }})</span>
+                      </div>
+                      <a
+                        href="/order/addtoshopcart/{{ p.id }}"
+                        class="add-to-cart-btn"
+                      >
+                        <i class="fa fa-shopping-cart"></i> Mua ngay
+                      </a>
+                    </div>
+                  </div>
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="section-divider">
+                <td colspan="{{ products|length|add:1 }}">Thông tin cơ bản</td>
+              </tr>
+              <tr>
+                <td class="sticky-col row-label">Thương hiệu</td>
+                {% for p in products %}
+                <td class="text-center font-weight-bold text-uppercase">
+                  {{ p.category.title }}
+                </td>
+                {% endfor %}
+              </tr>
+              <tr>
+                <td class="sticky-col row-label">Mô tả ngắn</td>
+                {% for p in products %}
+                <td class="text-center product-desc">
+                  {{ p.description|striptags|unescape_html|truncatewords:25 }}
+                </td>
+                {% endfor %}
+              </tr>
+              <tr class="section-divider">
+                <td colspan="{{ products|length|add:1 }}">
+                  Thông số kỹ thuật chi tiết
+                </td>
+              </tr>
+              <tr>
+                <td class="sticky-col row-label align-top">
+                  Cấu hình & Đặc điểm
+                </td>
+                {% for p in products %}
+                <td class="text-left align-top">
+                  <div class="detail-content">{{ p.detail|safe }}</div>
+                </td>
+                {% endfor %}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="row">
+      <div class="col-md-12 text-center" style="padding: 100px 0">
+        <i
+          class="fa fa-balance-scale"
+          style="font-size: 60px; color: #e4e7ed; margin-bottom: 20px"
+        ></i>
+        <h4>Danh sách so sánh trống</h4>
+        <p class="text-muted">
+          Vui lòng thêm sản phẩm vào danh sách để so sánh.
+        </p>
+        <a href="/" class="primary-btn" style="margin-top: 20px"
+          >Quay lại mua sắm</a
+        >
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  /* Tổng quan container */
+  .compare-wrapper {
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    position: relative;
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .compare-wrapper { overflow-x: auto; }
+  }
+
+  .compare-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  /* Sticky Header & Column */
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    background: #fdfdfd;
+    z-index: 10;
+    border-right: 2px solid #eee !important;
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.02);
+    width: 160px;
+  }
+
+  .first-col-header {
+    background: #f8f9fa !important;
+    z-index: 20;
+  }
+
+  /* Header styling */
+  .product-header {
+    background: #fff;
+    padding: 30px 15px !important;
+    vertical-align: top !important;
+    border-bottom: 2px solid #d10024 !important;
+  }
+
+  .header-label {
+    padding: 20px;
+    font-weight: 700;
+    color: #2b2d42;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* Product info card in header */
+  .product-info-box {
+    position: relative;
+    text-align: center;
+  }
+
+  .btn-remove-compare {
+    position: absolute;
+    top: -20px;
+    right: -10px;
+    color: #ff4d4f;
+    font-size: 20px;
+    transition: all 0.3s;
+    z-index: 5;
+  }
+
+  .btn-remove-compare:hover {
+    color: #d10024;
+    transform: rotate(90deg) scale(1.2);
+  }
+
+  .product-img {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  .product-img img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s;
+  }
+
+  .product-info-box:hover .product-img img {
+    transform: scale(1.05);
+  }
+
+  .product-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    height: 45px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .product-price {
+    color: #d10024;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .product-rating {
+    margin-bottom: 15px;
+    font-size: 12px;
+  }
+
+  .rating-stars {
+    display: inline-block;
+    color: #ffc107;
+    margin-right: 5px;
+  }
+
+  .add-to-cart-btn {
+    display: inline-block;
+    padding: 8px 20px;
+    background-color: #d10024;
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 12px;
+    border-radius: 30px;
+    transition: all 0.3s;
+  }
+
+  .add-to-cart-btn:hover {
+    background-color: #2b2d42;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(209, 0, 36, 0.3);
+  }
+
+  /* Body styling */
+  .section-divider {
+    background: #f1f1f1 !important;
+  }
+
+  .section-divider td {
+    padding: 12px 20px !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #8d99ae;
+    letter-spacing: 1px;
+  }
+
+  .row-label {
+    font-weight: 700;
+    color: #2b2d42;
+    padding: 20px !important;
+    font-size: 14px;
+    width: 160px;
+  }
+
+  .compare-table td {
+    padding: 20px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    vertical-align: top !important;
+  }
+
+  .product-desc {
+    color: #4a4a4a;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .detail-content {
+    overflow-x: hidden;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #333;
+    word-break: break-word;
+  }
+
+  .detail-content img,
+  .detail-content video,
+  .detail-content iframe,
+  .detail-content table {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* AI Summary Styling */
+  .ai-summary-card {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f7ff 100%);
+    border: 1px solid #91d5ff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 80, 179, 0.08);
+  }
+
+  .ai-summary-header {
+    background: #0050b3;
+    color: #fff;
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ai-summary-header i {
+    font-size: 20px;
+    margin-right: 15px;
+  }
+
+  .ai-summary-header h4 {
+    color: #fff;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .ai-summary-body {
+    padding: 25px;
+    color: #262626;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  /* Zebra striping */
+  .compare-table tbody tr:nth-child(even):not(.section-divider) {
+    background-color: #fafafa;
+  }
+  .compare-table tbody tr:hover:not(.section-divider) {
+    background-color: #f5f5f5;
+  }
+</style>
+
+<script>
+  document.querySelectorAll(".btn-remove-compare").forEach((btn) => {
+    btn.addEventListener("click", async function (e) {
+      e.preventDefault();
+      const url = this.getAttribute("href");
+      try {
+        const response = await fetch(url, {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        if (data.status === "success") {
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("Lỗi xóa so sánh:", error);
+      }
+    });
+  });
+</script>
+{% endblock %}

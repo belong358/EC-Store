@@ -1,0 +1,52 @@
+<ul class="reviews-list" style="list-style: none; padding: 0;">
+    {% for rs in comments %}
+    <li style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #FBFBFC;">
+        <div class="review-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center;">
+                <div style="width: 40px; height: 40px; background: #E4E7ED; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: 700; color: #30323A;">
+                    {{ rs.user.first_name|first|upper }}
+                </div>
+                <div>
+                    <h5 class="name" style="margin: 0; font-size: 15px;">{{ rs.user.first_name }}</h5>
+                    <span class="date" style="font-size: 12px; color: #8D99AE;">{{ rs.create_at|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+            <div class="review-rating" style="color: #D10024; font-size: 12px;">
+                <i class="fa fa-star{% if rs.rate < 1 %}-o empty{% endif %}"></i>
+                <i class="fa fa-star{% if rs.rate < 2 %}-o empty{% endif %}"></i>
+                <i class="fa fa-star{% if rs.rate < 3 %}-o empty{% endif %}"></i>
+                <i class="fa fa-star{% if rs.rate < 4 %}-o empty{% endif %}"></i>
+                <i class="fa fa-star{% if rs.rate < 5 %}-o empty{% endif %}"></i>
+            </div>
+        </div>
+        <div class="review-body" style="padding-left: 52px;">
+            <p style="color: #30323A; line-height: 1.6;">{{ rs.comment }}</p>
+        </div>
+    </li>
+    {% empty %}
+    <p class="text-center text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
+    {% endfor %}
+</ul>
+
+<!-- Pagination -->
+{% if comments.has_other_pages %}
+<div class="store-filter clearfix">
+    <ul class="store-pagination ajax-pagination">
+        {% if comments.has_previous %}
+            <li><a href="?page={{ comments.previous_page_number }}#tab3" data-page="{{ comments.previous_page_number }}"><i class="fa fa-angle-left"></i></a></li>
+        {% endif %}
+
+        {% for i in comments.paginator.page_range %}
+            {% if comments.number == i %}
+                <li class="active">{{ i }}</li>
+            {% else %}
+                <li><a href="?page={{ i }}#tab3" data-page="{{ i }}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if comments.has_next %}
+            <li><a href="?page={{ comments.next_page_number }}#tab3" data-page="{{ comments.next_page_number }}"><i class="fa fa-angle-right"></i></a></li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}

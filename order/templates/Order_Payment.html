@@ -1,0 +1,95 @@
+{% extends 'homebase.html' %}
+{% load humanize %}
+
+{% block title %} Thanh toán đơn hàng {% endblock %}
+
+{% block body %}
+<script src="https://js.stripe.com/v3/"></script>
+
+<div id="breadcrumb">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li><a href="/">Trang chủ</a></li>
+            <li class="active">Thanh toán</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7">
+                <div class="section-title">
+                    <h3 class="title">Thanh toán an toàn</h3>
+                </div>
+                
+                <div id="loading-container" class="text-center" style="padding: 50px 0;">
+                    <i class="fa fa-spinner fa-spin fa-3x" style="color: #D10024;"></i>
+                    <p style="margin-top: 15px;">Đang kết nối an toàn với Stripe...</p>
+                </div>
+
+                <div id="checkout"></div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="billing-details">
+                    <div class="section-title">
+                        <h4 class="title">Thông tin thẻ Demo</h4>
+                    </div>
+                    <div class="alert alert-warning">
+                        <p>Sao chép số thẻ dưới đây để thanh toán:</p>
+                        <hr>
+                        <p><strong>Số thẻ:</strong> <code style="cursor: pointer; background: #fff; padding: 2px 5px; border: 1px solid #ddd;" onclick="navigator.clipboard.writeText('4242424242424242'); alert('Đã sao chép số thẻ!')">4242 4242 4242 4242</code> (Click để copy)</p>
+                        <p><strong>Ngày hết hạn:</strong> <code>12 / 30</code></p>
+                        <p><strong>CVC:</strong> <code>123</code></p>
+                    </div>
+                </div>
+
+                <div class="order-summary">
+                    <div class="section-title">
+                        <h4 class="title">Tóm tắt đơn hàng #{{ order.code }}</h4>
+                    </div>
+                    <table class="shopping-cart-table table">
+                        <tfoot>
+                            <tr>
+                                <th class="empty" colspan="1"></th>
+                                <th>TỔNG CỘNG</th>
+                                <th class="total">{{ order.total|floatformat:3|intcomma }} VND</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('load', async function() {
+        try {
+            const response = await fetch('/order/get-checkout-config/{{ order.id }}/');
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            const { publicKey, clientSecret } = data;
+            const stripe = Stripe(publicKey);
+            
+            const checkout = await stripe.initEmbeddedCheckout({
+                clientSecret: clientSecret,
+            });
+
+            checkout.mount('#checkout');
+            
+            document.getElementById('loading-container').style.display = 'none';
+            
+        } catch (error) {
+            console.error("Lỗi khởi tạo thanh toán:", error);
+            document.getElementById('loading-container').innerHTML = 
+                '<div class="alert alert-danger">Lỗi: ' + error.message + '<br>Vui lòng tải lại trang hoặc liên hệ hỗ trợ.</div>';
+        }
+    });
+</script>
+{% endblock %}

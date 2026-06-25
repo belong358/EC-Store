@@ -1,0 +1,232 @@
+{% extends 'homebase.html' %}
+{% load humanize %}
+
+{% block title %} Giỏ hàng | EleStore {% endblock %}
+
+{% block body %}
+<div id="breadcrumb" class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="breadcrumb-tree">
+                    <li><a href="/">Trang chủ</a></li>
+                    <li class="active">Giỏ hàng của bạn</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                {% if shopcart %}
+                <div class="order-summary clearfix">
+                    <div class="section-title">
+                        <h3 class="title">Chi tiết giỏ hàng</h3>
+                    </div>
+                    <table class="shopping-cart-table table">
+                        <thead>
+                            <tr>
+                                <th>Sản Phẩm</th>
+                                <th></th>
+                                <th class="text-center">Đơn Giá</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-center">Thành tiền</th>
+                                <th class="text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rs in shopcart %}
+                            <tr>
+                                <td class="thumb">
+                                    <a href="/product/{{ rs.product.id }}/{{ rs.product.slug }}">
+                                        <img src="{{rs.product.image.url}}" alt="{{rs.product.title}}" style="width: 80px; border-radius: 4px;">
+                                    </a>
+                                </td>
+                                <td class="details">
+                                    <a href="/product/{{ rs.product.id }}/{{ rs.product.slug }}" style="font-weight: 700; color: #30323A; font-size: 16px;">
+                                        {{rs.product.title}}
+                                    </a>
+                                    <p class="small text-muted">Mã SP: #{{ rs.product.id }}</p>
+                                </td>
+                                <td class="price text-center">
+                                    <strong>{{ rs.product.price|floatformat:0|intcomma }} đ</strong>
+                                </td>
+                                <td class="qty text-center">
+                                    <div class="custom-input-number" style="width: 100px;">
+                                        <input type="number" class="qty-input" data-id="{{ rs.id }}" value="{{rs.quantity}}" min="1" max="{{rs.product.amount}}">
+                                        <span class="custom-qty-up">+</span>
+                                        <span class="custom-qty-down">-</span>
+                                    </div>
+                                </td>
+                                <td class="total text-center">
+                                    <strong class="primary-color" style="font-size: 18px;"><span id="amount-{{ rs.id }}">{{ rs.amount|floatformat:0|intcomma }}</span> đ</strong>
+                                </td>
+                                <td class="text-right">
+                                    <a href="{% url 'deletefromcart' rs.id %}" 
+                                       onclick="return confirm('Xóa sản phẩm này khỏi giỏ hàng?')" 
+                                       class="main-btn icon-btn" style="color: #D10024; border-color: #D10024;">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th class="empty" colspan="3"></th>
+                                <th style="font-size: 16px;">TỔNG CỘNG</th>
+                                <th colspan="2" class="sub-total" style="font-size: 24px; color: #D10024;"><span id="cart-total">{{ total|floatformat:0|intcomma }}</span> VND</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    
+                    <div class="pull-left">
+                        <a href="/" class="main-btn"><i class="fa fa-arrow-left"></i> Tiếp tục mua sắm</a>
+                    </div>
+                    <div class="pull-right">
+                        <a href="{% url 'orderproduct' %}" class="primary-btn" style="padding: 12px 30px; font-size: 16px;">
+                            Tiến hành đặt hàng <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center" style="padding: 100px 0;">
+                    <i class="fa fa-shopping-cart fa-5x" style="color: #E4E7ED; margin-bottom: 20px;"></i>
+                    <h3>Giỏ hàng của bạn đang trống</h3>
+                    <p>Hãy khám phá các sản phẩm tuyệt vời của chúng tôi!</p>
+                    <a href="/" class="primary-btn" style="margin-top: 20px;">Quay lại cửa hàng</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .shopping-cart-table tbody tr td {
+        vertical-align: middle;
+    }
+    .breadcrumb-tree li a:hover {
+        color: #D10024;
+        text-decoration: underline;
+    }
+    .details a:hover {
+        color: #D10024 !important;
+    }
+    /* Tùy chỉnh input number cho đẹp hơn */
+    .custom-input-number {
+        position: relative;
+    }
+    .custom-input-number input[type="number"] {
+        text-align: center;
+        border: 1px solid #E4E7ED;
+        height: 40px;
+        width: 100%;
+        border-radius: 4px;
+        -moz-appearance: textfield; /* Tắt spinner mặc định của Firefox */
+    }
+    .custom-input-number input::-webkit-outer-spin-button,
+    .custom-input-number input::-webkit-inner-spin-button {
+        -webkit-appearance: none; /* Tắt spinner mặc định của Chrome */
+        margin: 0;
+    }
+    .custom-qty-up, .custom-qty-down {
+        position: absolute;
+        display: block;
+        width: 20px;
+        height: 20px;
+        border: 1px solid #E4E7ED;
+        background-color: #FFF;
+        text-align: center;
+        font-weight: 700;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    .custom-qty-up {
+        right: 0;
+        top: 0;
+        border-bottom: none;
+    }
+    .custom-qty-down {
+        right: 0;
+        bottom: 0;
+    }
+    .custom-qty-up:hover, .custom-qty-down:hover {
+        background-color: #E4E7ED;
+        color: #D10024;
+    }
+</style>
+
+<script>
+    // Hàm format số tiền sang định dạng có dấu phẩy (VND)
+    function formatMoney(amount) {
+        return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Xử lý sự kiện thay đổi số lượng bằng AJAX
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('change', async function() {
+            const shopcartId = this.dataset.id;
+            const quantity = this.value;
+            const amountSpan = document.getElementById(`amount-${shopcartId}`);
+            const totalSpan = document.getElementById('cart-total');
+
+            // Hiệu ứng loading mờ
+            amountSpan.style.opacity = '0.5';
+            totalSpan.style.opacity = '0.5';
+
+            try {
+                const response = await fetch(`/order/update_shopcart/${shopcartId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `quantity=${quantity}`
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Cập nhật giá trị lên giao diện mà không load lại trang
+                    amountSpan.innerText = formatMoney(data.amount);
+                    totalSpan.innerText = formatMoney(data.total);
+                } else if (data.status === 'removed') {
+                    // Nếu số lượng về 0, xóa dòng đó
+                    this.closest('tr').remove();
+                    totalSpan.innerText = formatMoney(data.total);
+                    if (data.total === 0) location.reload(); // Load lại để hiện trang trống
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Lỗi AJAX:', error);
+            } finally {
+                amountSpan.style.opacity = '1';
+                totalSpan.style.opacity = '1';
+            }
+        });
+    });
+
+    // Xử lý nút tăng giảm (Đã đổi class để tránh conflict với theme JS)
+    document.querySelectorAll('.custom-qty-up, .custom-qty-down').forEach(btn => {
+        btn.onclick = function() {
+            const input = this.parentElement.querySelector('input');
+            let val = parseInt(input.value);
+            if (this.classList.contains('custom-qty-up')) {
+                input.value = val + 1;
+            } else {
+                if (val > 1) input.value = val - 1;
+            }
+            // Kích hoạt sự kiện 'change' để AJAX ở trên bắt được
+            input.dispatchEvent(new Event('change'));
+        };
+    });
+</script>
+{% endblock %}

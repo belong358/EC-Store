@@ -1,0 +1,151 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Tin nhắn{% endblock %}
+{% block nav_messages %}active{% endblock %}
+{% block page_title %}Tin nhắn liên hệ{% endblock %}
+{% block page_sub %}Quản lý & phản hồi tin nhắn từ khách hàng{% endblock %}
+
+{% block content %}
+<div class="page-top">
+  <div><h2>Tin nhắn liên hệ</h2><p>Tổng: {{ msgs|length }} tin nhắn</p></div>
+</div>
+
+<!-- Filter tabs -->
+<div style="display:flex;gap:8px;margin-bottom:18px">
+  <a href="/dashboard/messages/" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-ghost{% endif %}">Tất cả</a>
+  {% for val, label in status_choices %}
+  <a href="?status={{ val }}" class="btn btn-sm {% if status_filter == val %}btn-primary{% else %}btn-ghost{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  {% if msgs %}
+  <table>
+    <thead>
+      <tr><th>Người gửi</th><th>Tiêu đề</th><th>Nội dung</th><th>Ngày gửi</th><th>Trạng thái</th><th style="text-align:center">Thao tác</th></tr>
+    </thead>
+    <tbody>
+      {% for m in msgs %}
+      <tr>
+        <td>
+          <div style="font-weight:600;font-size:13px">{{ m.name }}</div>
+          <div style="font-size:11.5px;color:var(--muted)">{{ m.email }}</div>
+        </td>
+        <td style="font-weight:500;font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.subject }}</td>
+        <td style="font-size:12.5px;color:var(--muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.message }}</td>
+        <td style="font-size:12px;color:var(--muted);white-space:nowrap">{{ m.create_at|date:"d/m/Y H:i" }}</td>
+        <td>
+          <span class="pill {% if m.status == 'New' %}pill-new{% elif m.status == 'Read' %}pill-read{% else %}pill-closed{% endif %}">
+            {{ m.status }}
+          </span>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;justify-content:center">
+            <!-- Xem chi tiết -->
+            <button onclick="openMsg({{ m.id }}, '{{ m.name|escapejs }}', '{{ m.email|escapejs }}', '{{ m.subject|escapejs }}', '{{ m.message|escapejs }}', '{{ m.status }}')"
+              class="btn btn-ghost btn-sm btn-icon" title="Xem"><i class="fa fa-eye"></i></button>
+            <!-- Đánh dấu đã đọc -->
+            <form method="post" action="/dashboard/messages/{{ m.id }}/update/" style="display:inline">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="Read"/>
+              {% if m.status == 'New' %}
+              <button type="submit" class="btn btn-ghost btn-sm btn-icon" title="Đánh dấu đã đọc"><i class="fa fa-check"></i></button>
+              {% endif %}
+            </form>
+            <!-- Xóa -->
+            <button class="btn btn-danger btn-sm btn-icon" title="Xóa tin nhắn"
+              onclick="openDeleteMsg({{ m.id }}, '{{ m.name|escapejs }}', '{{ m.subject|escapejs }}')">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><i class="fa fa-envelope"></i>Không có tin nhắn nào</div>
+  {% endif %}
+</div>
+
+<!-- ══ MODAL XEM CHI TIẾT ══ -->
+<div id="msgModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:28px;max-width:520px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h3 style="font-size:16px;font-weight:800" id="mTitle">Chi tiết tin nhắn</h3>
+      <button onclick="closeMsg()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Từ</div><div style="font-weight:600;font-size:13.5px" id="mName"></div></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Email</div><div style="font-size:13px" id="mEmail"></div></div>
+    </div>
+    <div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Tiêu đề</div><div style="font-weight:600;font-size:14px" id="mSubject"></div></div>
+    <div style="background:var(--bg);border-radius:9px;padding:14px;font-size:13.5px;line-height:1.7;color:var(--text);margin-bottom:18px" id="mMessage"></div>
+    <form method="post" id="mForm">
+      {% csrf_token %}
+      <div style="display:flex;gap:8px;align-items:center">
+        <select name="status" class="form-control" style="flex:1">
+          {% for val, label in status_choices %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+        <button type="button" onclick="closeMsg()" class="btn btn-ghost">Đóng</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MODAL XÁC NHẬN XÓA ══ -->
+<div id="deleteMsgModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:var(--radius);padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">
+    <div style="width:56px;height:56px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fa fa-trash" style="font-size:22px;color:var(--red)"></i>
+    </div>
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:8px">Xóa tin nhắn?</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:6px;line-height:1.6">
+      Bạn xác nhận muốn xóa tin nhắn từ <strong id="deleteMsgName"></strong>?
+    </p>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:24px">
+      Tiêu đề: <em id="deleteMsgSubject"></em><br>
+      <span style="color:var(--red);font-weight:600">Không thể hoàn tác!</span>
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-ghost" onclick="document.getElementById('deleteMsgModal').style.display='none'">Hủy bỏ</button>
+      <form id="deleteMsgForm" method="post" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i> Xác nhận xóa</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Modal xem chi tiết
+function openMsg(id, name, email, subject, message, status) {
+  document.getElementById('mName').textContent    = name;
+  document.getElementById('mEmail').textContent   = email;
+  document.getElementById('mSubject').textContent = subject;
+  document.getElementById('mMessage').textContent = message;
+  document.getElementById('mForm').action = `/dashboard/messages/${id}/update/`;
+  const sel = document.querySelector('#mForm select');
+  for (let opt of sel.options) { opt.selected = (opt.value === status); }
+  document.getElementById('msgModal').style.display = 'flex';
+}
+function closeMsg() { document.getElementById('msgModal').style.display = 'none'; }
+document.getElementById('msgModal').addEventListener('click', function(e){ if(e.target===this) closeMsg(); });
+
+// Modal xóa
+function openDeleteMsg(id, name, subject) {
+  document.getElementById('deleteMsgName').textContent    = name;
+  document.getElementById('deleteMsgSubject').textContent = subject;
+  document.getElementById('deleteMsgForm').action = `/dashboard/messages/${id}/delete/`;
+  document.getElementById('deleteMsgModal').style.display = 'flex';
+}
+document.addEventListener('click', function(e) {
+  const m = document.getElementById('deleteMsgModal');
+  if (e.target === m) m.style.display = 'none';
+});
+</script>
+{% endblock %}

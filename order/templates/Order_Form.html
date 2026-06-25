@@ -1,0 +1,198 @@
+{% extends 'homebase.html' %}
+
+{% block title %} Đặt hàng {{ setting.title }} {% endblock %}
+{% block description %} {{ setting.description }} {% endblock %}
+{% block keywords %} {{ setting.keywords }} {% endblock %}
+{% load humanize %}
+{% block sidebar %} {% include 'sidebar.html' %} {% endblock %}
+{% block body %}
+
+<!-- BREADCRUMB -->
+<div id="breadcrumb">
+  <div class="container">
+    <ul class="breadcrumb">
+      <li><a href="/">Trang chủ</a></li>
+      <li class="active">Đặt hàng</li>
+    </ul>
+  </div>
+</div>
+<!-- /BREADCRUMB -->
+
+<!-- section -->
+<div class="section">
+  <!-- container -->
+  <div class="container">
+    <!-- row -->
+    <div class="row">
+      <div class="col-md-12">
+        {% if messages %} {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %} {% endif %}
+      </div>
+      
+      <form action="" method="post" id="checkout-form">
+        {% csrf_token %}
+        
+        <!-- Cột trái: Thông tin khách hàng -->
+        <div class="col-md-7">
+          <div class="billing-details">
+            <div class="section-title">
+              <h3 class="title">Thông tin giao hàng</h3>
+            </div>
+            <div class="form-group">
+              <label for="id_first_name">Họ:</label>
+              <input type="text" name="first_name" value="{{ user.first_name }}" class="input" maxlength="50" required id="id_first_name" />
+            </div>
+            <div class="form-group">
+              <label for="id_last_name">Tên:</label>
+              <input type="text" name="last_name" value="{{ user.last_name }}" class="input" maxlength="50" required id="id_last_name" />
+            </div>
+            <div class="form-group">
+              <label for="id_address">Địa chỉ cụ thể:</label>
+              <input type="text" name="address" value="{{ profile.address }}" class="input" maxlength="150" required id="id_address" placeholder="Số nhà, tên đường..." />
+            </div>
+            <div class="form-group">
+              <label for="id_phone">Số điện thoại:</label>
+              <input type="text" name="phone" value="{{ profile.phone }}" class="input" maxlength="20" required id="id_phone" />
+            </div>
+            <div class="form-group">
+              <label for="id_city">Thành Phố / Tỉnh:</label>
+              <select name="city" class="input" id="id_city">
+                <option value="{{ profile.city }}" selected>{{ profile.city }}</option>
+                <option value="Hà Nội">Hà Nội</option>
+                <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+                <option value="Hải Phòng">Hải Phòng</option>
+                <option value="Đà Nẵng">Đà Nẵng</option>
+                <option value="Cần Thơ">Cần Thơ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="id_country">Quốc Gia:</label>
+              <input type="text" name="country" class="input" id="id_country" value="Việt Nam" readonly />
+            </div>
+          </div>
+          
+          <!-- Danh sách sản phẩm thu nhỏ -->
+          <div class="order-summary clearfix" style="margin-top: 30px;">
+            <div class="section-title">
+              <h4 class="title">Sản phẩm trong đơn hàng</h4>
+            </div>
+            <table class="shopping-cart-table table">
+              <thead>
+                <tr>
+                  <th>Sản Phẩm</th>
+                  <th class="text-center">Số lượng</th>
+                  <th class="text-center">Tổng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for rs in shopcart %}
+                <tr>
+                  <td class="details">
+                    <a href="/product/{{ rs.product.id }}/{{ rs.product.slug }}">{{rs.product}}</a>
+                  </td>
+                  <td class="qty text-center">x{{rs.quantity}}</td>
+                  <td class="total text-center"><strong class="primary-color">{{ rs.amount|floatformat:0|intcomma}} VND</strong></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cột phải: Phương thức thanh toán & Tổng kết -->
+        <div class="col-md-5">
+          <div class="shiping-methods" style="background: #fbfbfb; padding: 20px; border: 1px solid #eee; border-radius: 4px;">
+            <div class="section-title">
+              <h3 class="title">Thanh toán</h3>
+            </div>
+            
+            <div class="order-summary" style="margin-bottom: 30px;">
+              <div class="pull-left">
+                <p>Tạm tính:</p>
+                <p>Phí vận chuyển:</p>
+                <h4 style="margin-top: 10px;">TỔNG CỘNG:</h4>
+              </div>
+              <div class="pull-right text-right">
+                <p><strong>{{ total|floatformat:0|intcomma }} VND</strong></p>
+                <p><strong style="color: #28a745;">Miễn phí</strong></p>
+                <h4 style="margin-top: 10px;" class="primary-color">{{ total|floatformat:0|intcomma }} VND</h4>
+              </div>
+              <div class="clearfix"></div>
+            </div>
+
+            <div class="section-title">
+              <h4 class="title" style="font-size: 16px;">Chọn phương thức</h4>
+            </div>
+            
+            <div class="input-checkbox">
+              <input type="radio" name="payment_method" id="payments-1" value="COD" checked>
+              <label for="payments-1">
+                <span></span>
+                <strong>Thanh toán khi nhận hàng (COD)</strong>
+              </label>
+              <div class="caption">
+                <p style="font-size: 13px; color: #666;">Thanh toán bằng tiền mặt cho nhân viên giao hàng khi bạn nhận được sản phẩm.</p>
+              </div>
+            </div>
+            
+            <div class="input-checkbox">
+              <input type="radio" name="payment_method" id="payments-3" value="VNPay">
+              <label for="payments-3">
+                <span></span>
+                <strong>Ví điện tử / Thẻ ATM (VNPay)</strong>
+              </label>
+              <div class="caption">
+                <p style="font-size: 13px; color: #666;">Thanh toán nhanh qua ứng dụng Ngân hàng hoặc Ví VNPay (Hỗ trợ tất cả ngân hàng VN).</p>
+              </div>
+            </div>
+
+            <div class="input-checkbox">
+              <input type="radio" name="payment_method" id="payments-4" value="MoMo">
+              <label for="payments-4">
+                <span></span>
+                <strong>Ví MoMo</strong>
+              </label>
+              <div class="caption">
+                <p style="font-size: 13px; color: #666;">Thanh toán an toàn qua ứng dụng Ví điện tử MoMo.</p>
+              </div>
+            </div>
+
+            <div class="input-checkbox">
+              <input type="radio" name="payment_method" id="payments-2" value="Stripe">
+              <label for="payments-2">
+                <span></span>
+                <strong>Thẻ Quốc tế (Stripe)</strong>
+              </label>
+              <div class="caption">
+                <p style="font-size: 13px; color: #666;">Thanh toán qua thẻ Visa, Mastercard, JCB (Cổng Stripe).</p>
+              </div>
+            </div>
+
+            <button type="submit" class="primary-btn btn-block" style="margin-top: 30px; font-size: 18px;">
+              XÁC NHẬN ĐẶT HÀNG <i class="fa fa-arrow-circle-right"></i>
+            </button>
+            
+            <div class="text-center" style="margin-top: 15px;">
+                <p style="font-size: 12px; color: #999;"><i class="fa fa-lock"></i> Thông tin của bạn luôn được bảo mật tuyệt đối.</p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <!-- /row -->
+  </div>
+  <!-- /container -->
+</div>
+<!-- /section -->
+
+<style>
+    .billing-details .form-group { margin-bottom: 15px; }
+    .billing-details label { font-weight: 600; margin-bottom: 5px; display: block; }
+    .input-checkbox { margin-bottom: 15px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+    .input-checkbox:last-child { border-bottom: none; }
+    .btn-block { width: 100%; display: block; }
+    .primary-btn:hover { opacity: 0.9; }
+</style>
+
+{% endblock %}

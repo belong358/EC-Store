@@ -1,0 +1,499 @@
+
+<!-- Kế thừa template từ file homebase.html -->
+{% extends 'homebase.html' %}
+{% load static %} 
+<!-- // load static tĩnh các file như js,css,... -->
+
+{% load humanize %}
+
+<!-- SEO Meta -->
+{% block title %} {{product.title}} {{ setting.title }} {% endblock %}
+{% block description %} {{ product.description }} {% endblock %}
+{% block keywords %} {{ product.keywords }} {% endblock %}
+
+
+<!-- Menu Nav -->
+{% block sidebar %} {% include 'sidebar.html' %} {% endblock %}
+
+
+{% block body %}
+
+		<!-- /NAVIGATION -->
+
+		<!-- BREADCRUMB -->
+		<div id="breadcrumb" class="section">
+			<!-- container -->
+			<div class="container">
+				<!-- row -->
+				<div class="row">
+					<div class="col-md-12">
+						<ul class="breadcrumb-tree">
+							<li><a href="/">Trang chủ</a></li>
+							<li><a href="/category/{{product.category.id}}/{{product.category.slug}}">{{product.category.title}} </a></li>
+							<li class="active">{{product.title}} </li>
+
+						</ul>
+					</div>
+				</div>
+				<!-- /row -->
+			</div>
+			<!-- /container -->
+		</div>
+		<!-- /BREADCRUMB -->
+
+		<!-- SECTION -->
+		<div class="section">
+			<!-- container -->
+			<div class="container">
+				<!-- row -->
+				<div class="row">
+					<!-- Product main img -->
+					<div class="col-md-5 col-md-push-2">
+						<div id="product-main-img">
+<!--							<div class="product-preview">-->
+<!--								<img src="./img/product01.png" alt="">-->
+<!--							</div>-->
+
+
+<!--							<div class="product-preview">-->
+<!--                                    <img src="{{ product.image.url }}" alt="" style="height: 500px">-->
+<!--							</div>-->
+							<div class="product-preview">
+								<img src="{{product.image.url}}" alt="" >
+							</div>
+
+							{% for rs in images %}
+							<div class="product-preview">
+								<img src="{{rs.image.url}}" alt="" >
+							</div>
+							{% endfor %}
+						</div>
+					</div>
+					<!-- /Product main img -->
+
+					<!-- Product thumb imgs -->
+					<div class="col-md-2  col-md-pull-5">
+						<div id="product-imgs">
+
+							<div class="product-preview">
+								<img src="{{product.image.url}}" alt="" >
+							</div>
+
+							{% for rs in images %}
+							<div class="product-preview">
+								<img src="{{rs.image.url}}" alt="" >
+							</div>
+							{% endfor %}
+
+						</div>
+					</div>
+					<!-- /Product thumb imgs -->
+
+					<!-- Product details -->
+					<div class="col-md-5">
+						<div class="product-details">
+							<h2 class="product-name">{{product.title}}</h2>
+							<div>
+							<div class="product-rating">
+								<i class="fa fa-star{% if product.avaregereview < 1%}-o empty{% endif%}" style="color:#DC143C"></i>
+								<i class="fa fa-star{% if product.avaregereview < 2%}-o empty{% endif%}" style="color:#DC143C"></i>
+								<i class="fa fa-star{% if product.avaregereview < 3%}-o empty{% endif%}" style="color:#DC143C"></i>
+								<i class="fa fa-star{% if product.avaregereview < 4%}-o empty{% endif%}" style="color:#DC143C"></i>
+								<i class="fa fa-star{% if product.avaregereview < 5%}-o empty{% endif%}" style="color:#DC143C"></i>
+								<a class="review-link" href="#"> {{ product.countreview}}  Đánh giá / Thêm Đánh Giá</a>
+                            </div>
+							</div>
+
+
+
+
+							<div>
+<!--								<h3 class="product-price">{{product.price|floatformat:3}} VND </h3>-->
+								<h3 class="product-price">{{ product.price|floatformat:0|intcomma }} VND </h3>
+<!--								<span class="product-available"> Còn Hàng</span>-->
+							</div>
+							<p>{{product.description|safe}}</p>
+
+
+
+<!--							<div class="add-to-cart">-->
+<!--								<div class="qty-label">-->
+<!--									Số lượng-->
+<!--									<div class="input-number">-->
+<!--										<input type="number">-->
+<!--										<span class="qty-up">+</span>-->
+<!--										<span class="qty-down">-</span>-->
+<!--									</div>-->
+<!--								</div>-->
+
+<!--								<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>-->
+<!--							</div>-->
+
+							<form action="/order/addtoshopcart/{{ product.id }}" method="post"  id="addchart-form">
+                                    {% csrf_token %}
+                                    <div id="SelectedProduct" class="add-to-cart">
+                                        <p><strong>Tình Trạng:</strong> {% if product.amount > 0  %} Còn Hàng {% else %} Hết Hàng {% endif %}</p>
+
+                                        <div class="qty-input">
+                                            <span class="text-uppercase">Số lượng: </span>
+                                            <input class="input" name="quantity" type="number" value="1" min="1" max="{{ product.amount }}">
+                                            <button class="add-to-cart-btn" type="submit" {% if product.amount < 1  %} disabled {% endif %} class="primary-btn add-to-cart">
+                                                <i class="fa fa-shopping-cart"></i> Thêm Vào Giỏ
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+							<div class="product-btns">
+								<button class="add-to-compare" data-id="{{ product.id }}" style="background: none; border: none; font-weight: 700; color: #333; text-transform: uppercase; font-size: 12px; margin-top: 10px;">
+									<i class="fa fa-exchange" style="color: #D10024;"></i> Thêm vào so sánh
+								</button>
+							</div>
+
+
+
+							<ul class="product-links">
+								<li>Loại:</li>
+								<li><a href="#">{{ product.category}}</a></li>
+
+							</ul>
+
+
+
+						</div>
+					</div>
+					<!-- /Product details -->
+
+					<!-- Product tab -->
+					<div class="col-md-12">
+						<div id="product-tab">
+							<!-- product tab nav -->
+							<ul class="tab-nav">
+								<li class="active"><a data-toggle="tab" href="#tab1">Chi tiết</a></li>
+								<li><a data-toggle="tab" href="#tab2">Mô tả</a></li>
+								<li><a data-toggle="tab" href="#tab3">Đánh giá ({{ product.countreview}} )</a></li>
+							</ul>
+							<!-- /product tab nav -->
+
+							<!-- product tab content -->
+							<div class="tab-content">
+								<!-- tab1  -->
+								<div id="tab1" class="tab-pane fade in active">
+									<div class="row">
+										<div class="col-md-12">
+											<p>  {{product.detail|safe}}</p>
+										</div>
+									</div>
+								</div>
+								<!-- /tab1  -->
+
+								<!-- tab2  -->
+								<div id="tab2" class="tab-pane fade in">
+									<div class="row">
+										<div class="col-md-12">
+											<p>{{product.description|safe}}</p>
+										</div>
+									</div>
+								</div>
+								<!-- /tab2  -->
+
+								<!-- tab3  -->
+								<div id="tab3" class="tab-pane fade in">
+									<div class="row">
+										<!-- Rating Overview -->
+										<div class="col-md-3">
+											<div id="rating" style="text-align: center; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #E4E7ED;">
+												<div class="rating-avg">
+													<span style="font-size: 48px; font-weight: 700;">{{ product.avaregereview|floatformat:1 }}</span>
+													<div class="rating-stars">
+														<i class="fa fa-star{% if product.avaregereview < 1 %}-o empty{% endif %}" style="color:#D10024"></i>
+														<i class="fa fa-star{% if product.avaregereview < 2 %}-o empty{% endif %}" style="color:#D10024"></i>
+														<i class="fa fa-star{% if product.avaregereview < 3 %}-o empty{% endif %}" style="color:#D10024"></i>
+														<i class="fa fa-star{% if product.avaregereview < 4 %}-o empty{% endif %}" style="color:#D10024"></i>
+														<i class="fa fa-star{% if product.avaregereview < 5 %}-o empty{% endif %}" style="color:#D10024"></i>
+													</div>
+												</div>
+												<p class="small text-muted" style="margin-top: 10px;">{{ product.countreview }} lượt đánh giá</p>
+											</div>
+										</div>
+
+										<!-- Reviews List -->
+										<div class="col-md-6">
+											<div id="reviews-container">
+												{% include 'reviews_list_fragment.html' %}
+											</div>
+										</div>
+
+										<!-- Review Form -->
+										<div class="col-md-3">
+											<div id="review-form-container" style="background: #FBFBFC; padding: 20px; border-radius: 8px;">
+												<h4 class="title" style="font-size: 16px; margin-bottom: 15px;">Viết đánh giá của bạn</h4>
+												{% if messages %}
+													{% for message in messages %}
+														<div class="alert alert-{{message.tags}} small">{{ message }}</div>
+													{% endfor %}
+												{% endif %}
+
+												<form class="review-form" action="/product/addcomment/{{product.id}}" method="post">
+													{% csrf_token %}
+													<div class="form-group">
+														<textarea class="input" name="comment" placeholder="Chia sẻ trải nghiệm của bạn..." style="height: 100px; border-radius: 4px;"></textarea>
+													</div>
+													<div class="form-group">
+														<div class="input-rating">
+															<span class="small">Đánh giá của bạn: </span>
+															<div class="stars" style="display: inline-block; margin-left: 10px;">
+																<input type="radio" id="star5" name="rate" value="5" /><label for="star5"></label>
+																<input type="radio" id="star4" name="rate" value="4" /><label for="star4"></label>
+																<input type="radio" id="star3" name="rate" value="3" /><label for="star3"></label>
+																<input type="radio" id="star2" name="rate" value="2" /><label for="star2"></label>
+																<input type="radio" id="star1" name="rate" value="1" /><label for="star1"></label>
+															</div>
+														</div>
+													</div>
+													{% if user.id is not None %}
+													<button class="primary-btn btn-block" style="border-radius: 4px;">Gửi Đánh Giá</button>
+													{% else %}
+													<div class="alert alert-warning small">Vui lòng <a href="/login">đăng nhập</a> để đánh giá.</div>
+													{% endif %}
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- /tab3  -->
+							</div>
+							<!-- /product tab content  -->
+						</div>
+					</div>
+					<!-- /product tab -->
+				</div>
+				<!-- /row -->
+			</div>
+			<!-- /container -->
+		</div>
+		<!-- /SECTION -->
+
+		<!-- Section -->
+		<div class="section">
+			<!-- container -->
+			<div class="container">
+				<!-- row -->
+				<div class="row">
+
+					<div class="col-md-12">
+						<div class="section-title text-center">
+							<h3 class="title">Sản Phẩm Khác</h3>
+						</div>
+					</div>
+
+					<!-- product -->
+					{% for rs in products_picked %}
+
+					<div class="col-md-3 col-xs-6">
+						<div class="product">
+							<div class="product-img">
+								<a href="/product/{{ rs.id }}/{{rs.slug}}" ></a>
+								<img src="{{ rs.image.url }}" alt="">
+
+							</div>
+							<div class="product-body">
+								<p class="product-category">{{ rs.category }}</p>
+								<h3 class="product-name"><a href="/product/{{ rs.id }}/{{rs.slug}}">{{ rs.title }}</a></h3>
+								<h4 class="product-price">{{ rs.price|floatformat:0|intcomma }} VND </h4>
+								<div class="product-rating">
+									<i class="fa fa-star{% if rs.avaregereview < 1%}-o empty{% endif%}" style="color:#DC143C"></i>
+									<i class="fa fa-star{% if rs.avaregereview < 2%}-o empty{% endif%}" style="color:#DC143C"></i>
+									<i class="fa fa-star{% if rs.avaregereview < 3%}-o empty{% endif%}" style="color:#DC143C"></i>
+									<i class="fa fa-star{% if rs.avaregereview < 4%}-o empty{% endif%}" style="color:#DC143C"></i>
+									<i class="fa fa-star{% if rs.avaregereview < 5%}-o empty{% endif%}" style="color:#DC143C"></i>
+								</div>
+								<div class="product-btns">
+									<button class="add-to-compare" data-id="{{ rs.id }}"><i class="fa fa-exchange"></i><span class="tooltipp">So sánh</span></button>
+									<button class="quick-view" onclick="location.href='/product/{{rs.id}}/{{rs.slug}}'"><i class="fa fa-eye"></i><span class="tooltipp">Xem nhanh</span></button>
+								</div>
+							</div>
+							<div class="add-to-cart">
+
+								<button href="/order/addtoshopcart/{{rs.id}}" class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
+							</div>
+						</div>
+					</div>
+					{% endfor %}
+					<!-- /product -->
+
+
+					<!-- /product -->
+
+					<div class="clearfix visible-sm visible-xs"></div>
+
+
+
+				</div>
+				<!-- /row -->
+			</div>
+			<!-- /container -->
+		</div>
+		<!-- /Section -->
+
+		<!-- NEWSLETTER -->
+
+		<!-- /NEWSLETTER -->
+
+		<script>
+		// 2. AJAX cho Gửi đánh giá
+		const reviewForm = document.querySelector('.review-form');
+		const reviewsContainer = document.getElementById('reviews-container');
+
+		if (reviewForm && reviewsContainer) {
+			// Xử lý Phân trang AJAX
+			reviewsContainer.addEventListener('click', async function(e) {
+				const link = e.target.closest('.ajax-pagination a');
+				if (link) {
+					e.preventDefault();
+					const page = link.getAttribute('data-page');
+					const productId = "{{ product.id }}";
+					const slug = "{{ product.slug }}";
+					
+					reviewsContainer.style.opacity = '0.5';
+					
+					try {
+						const response = await fetch(`/product/${productId}/${slug}/?page=${page}`, {
+							headers: {
+								'X-Requested-With': 'XMLHttpRequest'
+							}
+						});
+						const html = await response.text();
+						reviewsContainer.innerHTML = html;
+						
+						// Cuộn mượt lên đầu tab đánh giá
+						document.getElementById('product-tab').scrollIntoView({ behavior: 'smooth' });
+					} catch (error) {
+						console.error("Lỗi phân trang:", error);
+					} finally {
+						reviewsContainer.style.opacity = '1';
+					}
+				}
+			});
+
+			reviewForm.addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				const formData = new FormData(reviewForm);
+				const url = reviewForm.getAttribute('action');
+				const btnSubmit = reviewForm.querySelector('button');
+
+				btnSubmit.disabled = true;
+				btnSubmit.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang gửi...';
+
+				try {
+					const response = await fetch(url, {
+						method: 'POST',
+						body: formData,
+						headers: {
+							'X-Requested-With': 'XMLHttpRequest'
+						}
+					});
+
+					const data = await response.json();
+
+					if (data.status === 'success') {
+						// Hiển thị thông báo thành công
+						const alert = document.createElement('div');
+						alert.className = 'alert alert-success small';
+						alert.textContent = data.message;
+						reviewForm.prepend(alert);
+
+						// Thêm đánh giá mới vào danh sách (giả lập để người dùng thấy ngay)
+						const newReview = document.createElement('li');
+						newReview.style = "margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #FBFBFC; background: #f0fff4; transition: all 1s;";
+						
+						let starsHtml = '';
+						for(let i=1; i<=5; i++) {
+							starsHtml += `<i class="fa fa-star${i > data.rate ? '-o empty' : ''}"></i> `;
+						}
+
+						newReview.innerHTML = `
+							<div class="review-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+								<div style="display: flex; align-items: center;">
+									<div style="width: 40px; height: 40px; background: #48bb78; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: 700; color: #fff;">
+										${data.user.charAt(0).toUpperCase()}
+									</div>
+									<div>
+										<h5 class="name" style="margin: 0; font-size: 15px;">${data.user} <span class="label label-success" style="font-size: 10px;">Mới</span></h5>
+										<span class="date" style="font-size: 12px; color: #8D99AE;">${data.date}</span>
+									</div>
+								</div>
+								<div class="review-rating" style="color: #D10024; font-size: 12px;">
+									${starsHtml}
+								</div>
+							</div>
+							<div class="review-body" style="padding-left: 52px;">
+								<p style="color: #30323A; line-height: 1.6;">${data.comment}</p>
+							</div>
+						`;
+						
+						const listElement = reviewsContainer.querySelector('.reviews-list');
+						
+						// Nếu danh sách trống thì xóa dòng "Chưa có đánh giá"
+						const emptyMsg = listElement.querySelector('.text-center.text-muted');
+						if (emptyMsg) emptyMsg.remove();
+
+						listElement.prepend(newReview);
+						reviewForm.reset();
+						
+						// Sau 5s đổi màu nền về bình thường
+						setTimeout(() => {
+							newReview.style.background = 'transparent';
+						}, 3000);
+
+					} else {
+						alert(data.message || 'Có lỗi xảy ra.');
+					}
+				} catch (error) {
+					console.error("Lỗi gửi đánh giá:", error);
+					alert('Không thể gửi đánh giá lúc này.');
+				} finally {
+					btnSubmit.disabled = false;
+					btnSubmit.innerHTML = 'Gửi Đánh Giá';
+				}
+			});
+		}
+		</script>
+
+		<style>
+		/* Sửa lỗi hiển thị sao trong form đánh giá */
+		.input-rating .stars {
+		display: inline-block;
+		vertical-align: middle;
+		}
+		.input-rating .stars input[type="radio"] {
+		display: none;
+		}
+		.input-rating .stars label {
+		float: right;
+		cursor: pointer;
+		padding: 0 2px;
+		margin: 0;
+		}
+		.input-rating .stars label:before {
+		content: "\f005";
+		font-family: FontAwesome;
+		font-size: 16px;
+		color: #E4E7ED;
+		}
+		.input-rating .stars input[type="radio"]:checked ~ label:before {
+		color: #D10024;
+		}
+		.input-rating .stars label:hover ~ label:before,
+		.input-rating .stars label:hover:before {
+		color: #D10024;
+		}
+
+		/* Style cho box AI */
+		.reviews-list li:last-child {
+		border-bottom: none !important;
+		}
+		</style>
+		{% endblock %}
+

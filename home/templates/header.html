@@ -1,0 +1,228 @@
+<!-- HEADER -->
+{% load static %}
+{% load humanize %}
+<style>
+	/* Căn giữa toàn bộ Row chứa Logo, Search, Nút bấm */
+	#header .row {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap; /* Hỗ trợ responsive mobile */
+	}
+	
+	/* Sửa thanh tìm kiếm thành hình viên thuốc hoàn chỉnh, tự động co giãn */
+	.header-search {
+		padding: 0 30px; /* Cách xa các nút xung quanh */
+	}
+	.header-search form {
+		display: flex !important;
+		align-items: center;
+		width: 100%;
+		background: #fff;
+		border: 1px solid #E4E7ED;
+		border-radius: 40px;
+		overflow: hidden; /* Cắt các góc nhọn của input/button bên trong */
+	}
+	.header-search form .input-select {
+		width: 140px;
+		border: none;
+		background: transparent;
+		height: 40px;
+		padding-left: 15px;
+		border-right: 1px solid #E4E7ED;
+		outline: none;
+	}
+	.header-search form .input {
+		flex: 1; /* Chiếm hết khoảng trống còn lại */
+		border: none;
+		height: 40px;
+		padding: 0 15px;
+		outline: none;
+		width: 100%;
+	}
+	.header-search form .search-btn {
+		width: 120px;
+		border: none;
+		height: 40px;
+		background: #D10024;
+		color: #FFF;
+		font-weight: 700;
+		cursor: pointer;
+	}
+	
+	/* Sửa lỗi lệch hàng của Giỏ hàng, So sánh, Tài khoản */
+	.header-ctn {
+		display: flex !important;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 20px; /* Khoảng cách đều giữa các nút */
+		padding: 0;
+		float: none;
+	}
+	.header-ctn > div {
+		float: none !important; /* Xóa float mặc định gây lỗi */
+		margin-left: 0 !important;
+	}
+	/* Căn giữa icon và chữ theo chiều dọc cho từng nút */
+	.header-ctn > div > a {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		position: relative;
+		text-decoration: none;
+		color: #FFF;
+	}
+	.header-ctn > div > a > i {
+		font-size: 18px;
+		margin-bottom: 3px;
+	}
+	.header-ctn > div > a > span {
+		font-size: 12px;
+	}
+	#cart-qty-badge,
+	#compare-count-header {
+    	position: absolute;
+    	right: -5px;
+    	top: -5px;
+    	width: 20px;
+    	height: 20px;
+    	line-height: 20px;
+    	text-align: center;
+ 		border-radius: 50%;
+    	font-size: 10px;
+    	color: #FFF;
+    	background-color: #D10024;
+    	z-index: 9999;
+    	pointer-events: none;
+	}
+</style>
+<header>
+	<!-- TOP HEADER -->
+	<div id="top-header">
+		<div class="container">
+			<ul class="header-links pull-left">
+				<li><a href="#"><i class="fa fa-phone"></i>{{setting.phone}}</a></li>
+				<li><a href="#"><i class="fa fa-envelope"></i> {{ setting.email }}</a></li>
+				<li><a href="#"><i class="fa fa-location-dot"></i> {{setting.address}}</a></li>
+			</ul>
+			<ul class="header-links pull-right">
+				<li><a href="#"><i class="fa fa-dollar"></i> VND</a></li>
+			</ul>
+		</div>
+	</div>
+	<!-- /TOP HEADER -->
+
+	<!-- MAIN HEADER -->
+	<div id="header">
+		<!-- container -->
+		<div class="container">
+			<!-- row -->
+			<div class="row">
+				<!-- LOGO -->
+				<div class="col-md-3">
+					<div class="header-logo">
+						<a href="/" class="logo">
+							<img src="{% static '' %}img/logog.png" alt="">
+						</a>
+					</div>
+				</div>
+				<!-- /LOGO -->
+
+				<!-- SEARCH BAR -->
+				<div class="col-md-6">
+					<div class="header-search">
+						<form action="/search/" method="post">
+							{% csrf_token %}
+							<input id="query" name="query" class="input" type="text" placeholder="Tìm kiếm ở đây...">
+							<button type="submit" class="search-btn">Tìm kiếm</button>
+						</form>
+					</div>
+				</div>
+				<!-- /SEARCH BAR -->
+
+				<!-- ACCOUNT -->
+				<div class="col-md-3 clearfix">
+					<div class="header-ctn">
+						<!-- Compare -->
+						<div>
+							<a href="/product/compare/">
+								<i class="fa fa-exchange"></i>
+								<span>So sánh</span>
+								<div class="qty" id="compare-count-header">{{ request.session.compare_list|length|default:0 }}</div>
+							</a>
+						</div>
+						<!-- /Compare -->
+
+						<!-- Account -->
+						<div class="dropdown">
+							<a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" style="cursor: pointer;">
+								<i class="fa fa-user"></i>
+								<span>{% if user.id is not None %}{{ user.username }}{% else %}Tài khoản{% endif %}</span>
+							</a>
+							<ul class="custom-menu dropdown-menu">
+								{% if user.id is not None %}
+									<li><a href="/user"><i class="fa fa-user-o"></i> Tài Khoản</a></li>
+									<li><a href="/user/orders"><i class="fa fa-exchange"></i> Đơn hàng</a></li>
+									<li><a href="/user/comments"><i class="fa fa-check"></i> Bình luận</a></li>
+									<li><a href="/logout"><i class="fa fa-unlock-alt"></i> Đăng xuất</a></li>
+								{% else %}
+									<li><a href="/login"><i class="fa fa-sign-in"></i> Đăng nhập</a></li>
+									<li><a href="/signup"><i class="fa fa-user-plus"></i> Đăng ký</a></li>
+								{% endif %}
+							</ul>
+						</div>
+						<!-- /Account -->
+
+						<!-- Cart -->
+						<div class="dropdown" style="position:relative;">
+							<div class="qty" id="cart-qty-badge" style="position:absolute;right:-5px;top:-5px;z-index:9999;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;font-size:10px;color:#fff;background:#d10024;pointer-events:none;">{{totalqty|default:0}}</div>
+							<a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" style="cursor: pointer;">
+								<i class="fa fa-shopping-cart"></i>
+								<span>Giỏ hàng</span>
+							</a>
+							<div class="cart-dropdown">
+								<div id="cart-dropdown-content">
+									{% include 'cart_dropdown_content.html' %}
+								</div>
+								<div class="cart-btns">
+									<a href="/shopcart/">Xem giỏ hàng</a>
+									<a href="/order/orderproduct">Thanh toán <i class="fa fa-arrow-circle-right"></i></a>
+								</div>
+							</div>
+						</div>
+						<!-- /Cart -->
+
+						<!-- Menu Toogle -->
+						<div class="menu-toggle">
+							<a href="#">
+								<i class="fa fa-bars"></i>
+								<span>Menu</span>
+							</a>
+						</div>
+						<!-- /Menu Toogle -->
+					</div>
+				</div>
+				<!-- /ACCOUNT -->
+			</div>
+			<!-- row -->
+		</div>
+		<!-- container -->
+	</div>
+	<!-- /MAIN HEADER -->
+</header>
+<!-- /HEADER -->
+
+<script>
+	$(function() {
+		$("#query").autocomplete({
+			source: "/search_auto/",
+			select: function (event, ui) { //item selected
+				AutoCompleteSelectHandler(event, ui)
+			},
+			minLength: 2,
+		});
+	});
+	function AutoCompleteSelectHandler(event, ui)
+	{
+		var selectedObj = ui.item;
+	}
+</script>

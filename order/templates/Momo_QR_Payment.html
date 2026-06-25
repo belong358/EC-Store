@@ -1,0 +1,120 @@
+{% extends 'homebase.html' %}
+{% load humanize %}
+
+{% block title %} Thanh toán MoMo QR {% endblock %}
+
+{% block body %}
+<div id="breadcrumb">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li><a href="/">Trang chủ</a></li>
+            <li class="active">Thanh toán MoMo</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <div class="section-title">
+                    <h3 class="title">Thanh toán qua ví MoMo</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="billing-details text-center" style="border: 1px solid #E4E7ED; padding: 30px; border-radius: 10px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" width="80" style="margin-bottom: 20px;">
+                    
+                    <h4 style="color: #A50064;">Tổng thanh toán: {{ order.total|floatformat:3|intcomma }} VND</h4>
+                    <p class="text-muted">Đơn hàng: #{{ order.code }}</p>
+                    
+                    <hr>
+
+                    <div id="qrcode-container" style="display: inline-block; padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 5px; margin: 20px 0;">
+                        <div id="qrcode"></div>
+                    </div>
+
+                    <div id="status-message">
+                        <p><i class="fa fa-refresh fa-spin"></i> Đang chờ bạn quét mã và thanh toán...</p>
+                        <p class="small text-muted">Vui lòng mở ứng dụng MoMo để quét mã QR trên.</p>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top: 20px; text-align: left;">
+                        <h5>Hướng dẫn thanh toán Sandbox:</h5>
+                        <ol style="padding-left: 20px;">
+                            <li>Do đây là môi trường thử nghiệm, QR này chỉ dùng cho <strong>App MoMo Sandbox</strong>.</li>
+                            <li>Hoặc bạn có thể click nút bên dưới để vào trang thanh toán MoMo và dùng số test:</li>
+                            <li>SĐT: <code>0987654321</code> | OTP: <code>000000</code></li>
+                        </ol>
+                        <div class="text-center" style="margin-top: 15px;">
+                            <a href="{{ payUrl }}" class="primary-btn btn-sm" target="_blank">Đến trang MoMo Test</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    const payUrl = "{{ payUrl|safe }}";
+    if (payUrl) {
+        new QRCode(document.getElementById("qrcode"), {
+            text: payUrl,
+            width: 250,
+            height: 250,
+            colorDark: "#A50064",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+
+    const orderId = "{{ order.id }}";
+    const checkStatusUrl = "{% url 'check_order_status' order.id %}";
+
+    const checkPaymentStatus = setInterval(async () => {
+        try {
+            const response = await fetch(checkStatusUrl);
+            const data = await response.json();
+
+            if (data.status === 'Chờ lấy hàng') {
+                clearInterval(checkPaymentStatus);
+                document.getElementById('status-message').innerHTML = 
+                    '<h4 class="text-success"><i class="fa fa-check-circle"></i> Thanh toán thành công!</h4><p>Đang chuyển hướng...</p>';
+                
+                setTimeout(() => {
+                    window.location.href = "{% url 'payment_success' %}?order_id=" + orderId + "&method=MoMo";
+                }, 2000);
+            } else if (data.status === 'Hủy') {
+                clearInterval(checkPaymentStatus);
+                document.getElementById('status-message').innerHTML = 
+                    '<h4 class="text-danger"><i class="fa fa-times-circle"></i> Giao dịch đã bị hủy.</h4>';
+            }
+        } catch (error) {
+            console.error("Lỗi kiểm tra trạng thái:", error);
+        }
+    }, 3000); 
+</script>
+
+<style>
+    #qrcode img {
+        margin: 0 auto;
+    }
+    .primary-btn {
+        background-color: #A50064;
+        color: #FFF;
+        padding: 10px 20px;
+        border-radius: 40px;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+    .primary-btn:hover {
+        background-color: #d80082;
+        color: #FFF;
+    }
+</style>
+{% endblock %}

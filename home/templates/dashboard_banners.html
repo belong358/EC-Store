@@ -1,0 +1,66 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}Banner{% endblock %}
+{% block nav_banners %}active{% endblock %}
+{% block page_title %}Banner{% endblock %}
+{% block page_sub %}Quản lý banner hiển thị trên trang chủ{% endblock %}
+
+{% block content %}
+<div class="page-top">
+  <div><h2>Danh sách banner</h2><p>Tổng: {{ banners|length }} banner</p></div>
+  <a href="/dashboard/banners/add/" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm banner</a>
+</div>
+
+<div class="card">
+  {% if banners %}
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr><th>Banner</th><th>Liên kết</th><th>Bắt đầu</th><th>Kết thúc</th><th>Trạng thái</th><th style="text-align:center">Thao tác</th></tr>
+      </thead>
+      <tbody>
+        {% for b in banners %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              {% if b.image %}
+              <img src="{{ b.image.url }}" style="width:80px;height:45px;border-radius:7px;object-fit:cover;border:1px solid var(--border)" alt=""/>
+              {% endif %}
+              <div>
+                <div style="font-weight:600;font-size:13px">{{ b.title }}</div>
+                <div style="font-size:11.5px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.description }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:12.5px;color:var(--blue)">
+            {% if b.link %}<a href="{{ b.link }}" target="_blank" style="color:var(--blue)">{{ b.link|truncatechars:30 }}</a>{% else %}—{% endif %}
+          </td>
+          <td style="font-size:12.5px;color:var(--muted);white-space:nowrap">{{ b.start_at|date:"d/m/Y H:i" }}</td>
+          <td style="font-size:12.5px;white-space:nowrap">
+            <span style="color:{% if b.end_at < today %}var(--red){% else %}var(--muted){% endif %}">
+              {{ b.end_at|date:"d/m/Y H:i" }}
+            </span>
+          </td>
+          <td>
+            <span class="pill {% if b.status == 'True' %}pill-active{% else %}pill-inactive{% endif %}">
+              {% if b.status == 'True' %}Hiển thị{% else %}Ẩn{% endif %}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;justify-content:center">
+              <a href="/dashboard/banners/{{ b.id }}/edit/" class="btn btn-ghost btn-sm btn-icon" title="Sửa"><i class="fa fa-pen"></i></a>
+              <form method="post" action="/dashboard/banners/{{ b.id }}/delete/" style="display:inline" onsubmit="return confirm('Xóa banner này?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm btn-icon" title="Xóa"><i class="fa fa-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fa fa-image"></i>Chưa có banner nào</div>
+  {% endif %}
+</div>
+{% endblock %}

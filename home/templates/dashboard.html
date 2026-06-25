@@ -1,0 +1,194 @@
+{% extends 'dashboard_base.html' %}
+{% load humanize %}
+{% block title %}Tổng quan{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block page_title %}Tổng quan{% endblock %}
+{% block page_sub %}{{ today|date:"l, d/m/Y" }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);transition:transform .2s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.stat-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.stat-badge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+.badge-up{background:#dcfce7;color:#166534}
+.badge-new{background:#fef3c7;color:#92400e}
+.badge-info{background:#dbeafe;color:#1e40af}
+.stat-value{font-size:24px;font-weight:800;line-height:1}
+.stat-label{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:500}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:9px;padding-top:9px;border-top:1px solid var(--border)}
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px}
+.chart-wrap{position:relative;height:230px}
+.tables-grid{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:14px}
+.tables-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mini-rank{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.rank-1{background:#fef3c7;color:#92400e}.rank-2{background:#f0f4ff;color:#3730a3}
+.rank-3{background:#fdf2f8;color:#86198f}.rank-4,.rank-5{background:var(--bg);color:var(--muted)}
+.view-all{display:block;text-align:center;padding:11px;color:var(--red);font-size:12.5px;font-weight:600;border-top:1px solid var(--border);text-decoration:none;transition:background .15s}
+.view-all:hover{background:var(--red-soft)}
+.msg-row{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
+.msg-row:last-child{border-bottom:none}
+.msg-av{width:32px;height:32px;border-radius:50%;background:var(--red-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--red);flex-shrink:0}
+.u-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-ico" style="background:#fff0f2;color:var(--red)"><i class="fa fa-sack-dollar"></i></div>
+      <span class="stat-badge badge-up">Hoàn thành</span>
+    </div>
+    <div class="stat-value">{{ total_revenue|floatformat:0|intcomma }}</div>
+    <div class="stat-label">Doanh thu (VND)</div>
+    <div class="stat-sub"><i class="fa fa-circle-check" style="color:var(--green)"></i> Đơn hoàn thành</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-ico" style="background:#eff6ff;color:var(--blue)"><i class="fa fa-bag-shopping"></i></div>
+      <span class="stat-badge badge-info">Tổng</span>
+    </div>
+    <div class="stat-value">{{ total_orders }}</div>
+    <div class="stat-label">Tổng đơn hàng</div>
+    <div class="stat-sub"><i class="fa fa-clock" style="color:var(--amber)"></i> {{ pending_orders }} chờ xử lý</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-ico" style="background:#f0fdf4;color:var(--green)"><i class="fa fa-box"></i></div>
+      <span class="stat-badge badge-up">Active</span>
+    </div>
+    <div class="stat-value">{{ total_products }}</div>
+    <div class="stat-label">Sản phẩm</div>
+    <div class="stat-sub"><i class="fa fa-circle" style="color:var(--green);font-size:8px"></i> Đang bán</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-ico" style="background:#faf5ff;color:var(--purple)"><i class="fa fa-user-plus"></i></div>
+      <span class="stat-badge badge-new">Tháng này</span>
+    </div>
+    <div class="stat-value">{{ new_users_month }}</div>
+    <div class="stat-label">Người dùng mới</div>
+    <div class="stat-sub"><i class="fa fa-calendar" style="color:var(--purple)"></i> {{ today|date:"m/Y" }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-ico" style="background:#fff7ed;color:var(--amber)"><i class="fa fa-envelope-open-text"></i></div>
+      {% if new_messages > 0 %}<span class="stat-badge badge-new">Mới</span>{% endif %}
+    </div>
+    <div class="stat-value">{{ new_messages }}</div>
+    <div class="stat-label">Tin nhắn chưa đọc</div>
+    <div class="stat-sub"><a href="/dashboard/messages/" style="color:var(--red);text-decoration:none;font-size:11.5px">Xem tất cả →</a></div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Doanh thu theo tháng</div></div>
+    <div class="card-body"><div class="chart-wrap"><canvas id="rev"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Trạng thái đơn hàng</div></div>
+    <div class="card-body"><div class="chart-wrap"><canvas id="sts"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Tables row 1 -->
+<div class="tables-grid">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Đơn hàng gần đây</div>
+      <a href="/dashboard/orders/" class="btn btn-ghost btn-sm">Xem tất cả</a>
+    </div>
+    {% if recent_orders %}
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Mã</th><th>Khách hàng</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          {% for o in recent_orders %}
+          <tr>
+            <td><a href="/dashboard/orders/{{ o.id }}/" style="color:var(--red);font-weight:700">#{{ o.code }}</a></td>
+            <td>{{ o.first_name }} {{ o.last_name }}</td>
+            <td style="font-weight:700;color:var(--red)">{{ o.total|floatformat:0|intcomma }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ o.payment_method }}</td>
+            <td>
+              <span class="pill {% if o.status == 'Đã giao hàng' %}pill-done{% elif o.status == 'Đã hủy' %}pill-cancel{% elif o.status == 'Trả hàng' %}pill-return{% elif o.status == 'Chờ xác nhận' %}pill-new{% elif o.status == 'Chờ lấy hàng' %}pill-accept{% elif o.status == 'Chờ giao hàng' %}pill-ship{% else %}pill-accept{% endif %}">{{ o.status }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<div class="empty-state"><i class="fa fa-bag-shopping"></i>Chưa có đơn hàng</div>{% endif %}
+    <a href="/dashboard/orders/" class="view-all">Xem tất cả đơn hàng</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Sản phẩm bán chạy</div></div>
+    <div class="card-body" style="padding-top:10px">
+      {% for p in top_products %}
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;{% if not forloop.last %}border-bottom:1px solid var(--border){% endif %}">
+        <div class="mini-rank rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
+        {% if p.product__image %}<img src="/uploads/{{ p.product__image }}" class="img-thumb" alt=""/>{% endif %}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.product__title }}</div>
+          <div style="font-size:11.5px;color:var(--muted)">Đã bán: <strong>{{ p.total_sold }}</strong></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--red)">{{ p.revenue|floatformat:0|intcomma }}</div>
+      </div>
+      {% empty %}<div class="empty-state"><i class="fa fa-box"></i>Chưa có dữ liệu</div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Tables row 2 -->
+<div class="tables-grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Người dùng mới</div><a href="/dashboard/users/" class="btn btn-ghost btn-sm">Xem tất cả</a></div>
+    <div class="card-body" style="padding-top:8px;padding-bottom:8px">
+      {% for u in new_users %}
+      <div class="msg-row">
+        <div class="u-av">{{ u.username|first|upper }}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:600">{{ u.get_full_name|default:u.username }}</div>
+          <div style="font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);flex-shrink:0">{{ u.date_joined|date:"d/m/Y" }}</div>
+      </div>
+      {% empty %}<div class="empty-state"><i class="fa fa-users"></i>Chưa có người dùng mới</div>{% endfor %}
+    </div>
+    <a href="/dashboard/users/" class="view-all">Xem tất cả</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Tin nhắn chưa đọc</div><a href="/dashboard/messages/" class="btn btn-ghost btn-sm">Xem tất cả</a></div>
+    <div class="card-body" style="padding-top:8px;padding-bottom:8px">
+      {% for m in recent_messages %}
+      <div class="msg-row">
+        <div class="msg-av">{{ m.name|first|upper }}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:600">{{ m.name }}</div>
+          <div style="font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.subject }}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);flex-shrink:0">{{ m.create_at|date:"d/m" }}</div>
+      </div>
+      {% empty %}<div class="empty-state"><i class="fa fa-envelope"></i>Không có tin nhắn mới</div>{% endfor %}
+    </div>
+    <a href="/dashboard/messages/" class="view-all">Xem tất cả</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const L={{ chart_labels|safe }}, D={{ chart_data|safe }}, SL={{ status_labels|safe }}, SD={{ status_data|safe }};
+new Chart(document.getElementById('rev'),{type:'bar',data:{labels:L,datasets:[{label:'Doanh thu',data:D,backgroundColor:'rgba(209,0,36,.15)',borderColor:'#d10024',borderWidth:2,borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{family:'Be Vietnam Pro',size:11}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{family:'Be Vietnam Pro',size:10},callback:v=>v>=1e9?(v/1e9).toFixed(1)+'T':v>=1e6?(v/1e6).toFixed(0)+'M':v}}}}});
+const SC={'Chờ xác nhận':'#f97316','Chờ lấy hàng':'#3b82f6','Chờ giao hàng':'#eab308','Đã giao hàng':'#22c55e','Trả hàng':'#8b5cf6','Đã hủy':'#ef4444'};
+new Chart(document.getElementById('sts'),{type:'doughnut',data:{labels:SL,datasets:[{data:SD,backgroundColor:SL.map(l=>SC[l]||'#8b5cf6'),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{family:'Be Vietnam Pro',size:11},padding:12,boxWidth:11,usePointStyle:true}}}}});
+</script>
+{% endblock %}

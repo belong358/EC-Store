@@ -1,0 +1,6 @@
+cd "D:\Nhóm 5_Website Laptop EC Store\elestore"
+deactivate
+rmdir /s /q venv (nếu lỗi -> xài lệnh dưới)
+Remove-Item -Recurse -Force venv
+py -3.11 -m venv venv
+venv\Scripts\activate

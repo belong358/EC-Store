@@ -1,0 +1,75 @@
+<!-- FOOTER -->
+{% load static %}
+{% load humanize %}
+		<footer id="footer">
+			<!-- top footer -->
+			<div class="section">
+				<!-- container -->
+				<div class="container">
+					<!-- row -->
+					<div class="row">
+						<div class="col-md-3 col-xs-6">
+							<div class="footer">
+								<h3 class="footer-title">Giới thiệu</h3>
+								<ul class="footer-links">
+									<li><a href="#"><i class="fa fa-location-dot"></i>{{setting.address}}</a></li>
+									<li><a href="#"><i class="fa fa-phone"></i>{{setting.phone}}</a></li>
+									<li><a href="#"><i class="fa fa-envelope"></i>{{ setting.email }}</a></li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="col-md-3 col-xs-6">
+							<div class="footer">
+								<h3 class="footer-title">Danh mục</h3>
+								<ul class="footer-links">
+									<li><a href="/category/4/laptop">Laptop</a></li>
+									<li><a href="/category/11/linh-kien">Linh kiện</a></li>
+									<li><a href="/category/7/ph-kin">Phụ kiện</a></li>
+
+								</ul>
+							</div>
+						</div>
+
+						<div class="clearfix visible-xs"></div>
+
+						<div class="col-md-3 col-xs-6">
+							<div class="footer">
+								<h3 class="footer-title">Thông tin</h3>
+								<ul class="footer-links">
+									<li><a href="/aboutus">Giới thiệu</a></li>
+									<li><a href="/contact">Liên hệ</a></li>
+								</ul>
+							</div>
+						</div>
+
+						<div class="col-md-3 col-xs-6">
+							<div class="footer">
+								<h3 class="footer-title">Dịch vụ</h3>
+								<ul class="footer-links">
+									<li><a href="/user">Tài khoản</a></li>
+									<li><a href="/shopcart/">Giỏ hàng</a></li>
+									<li><a href="/user/orders">Đơn hàng</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+					<!-- /row -->
+				</div>
+				<!-- /container -->
+			</div>
+			<!-- /top footer -->
+
+			
+		</footer>
+		<!-- /FOOTER -->
+
+		<!-- jQuery Plugins -->
+		{% load static %}
+		<script src="{% static '' %}js/jquery.min.js"></script>
+		<script src="{% static '' %}js/bootstrap.min.js"></script>
+		<script src="{% static '' %}js/slick.min.js"></script>
+		<script src="{% static '' %}js/nouislider.min.js"></script>
+		<script src="{% static '' %}js/jquery.zoom.min.js"></script>
+		<script src="{% static '' %}js/main.js"></script>
+		<script src="{% static '' %}js/cart-ajax.js"></script>

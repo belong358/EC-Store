@@ -1,0 +1,99 @@
+{% load static %}
+{% if banners %}
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+<style>
+    .swiper {
+        width: 100%;
+        height: auto;
+        min-height: 400px;
+        max-height: 600px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        overflow: hidden;
+        /* Fix overflow:hidden with border-radius on some browsers */
+        transform: translateZ(0);
+        z-index: 1;
+    }
+    .swiper-slide {
+        text-align: center;
+        background: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+    .swiper-slide img {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        transition: transform 2s ease;
+    }
+    .swiper-slide:hover img {
+        transform: scale(1.05);
+    }
+    .banner-badge {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: #D10024;
+        color: #fff;
+        padding: 5px 15px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        z-index: 20;
+        border-radius: 2px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="container" style="padding-top: 30px;">
+    <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+            {% for rs in banners %}
+            <div class="swiper-slide">
+                <span class="banner-badge">New Product</span>
+                {% if rs.link %}
+                <a href="{{ rs.link }}" style="width: 100%;">
+                    <img src="{{ rs.image.url }}" alt="{{ rs.title }}">
+                </a>
+                {% else %}
+                <img src="{{ rs.image.url }}" alt="{{ rs.title }}">
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Add Pagination -->
+        <div class="swiper-pagination"></div>
+        <!-- Add Navigation -->
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+</div>
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<!-- Initialize Swiper -->
+<script>
+    var swiper = new Swiper(".mySwiper", {
+        loop: true,
+        autoHeight: true,
+        autoplay: {
+            delay: 4000,
+            disableOnInteraction: false,
+        },
+        pagination: {
+            el: ".swiper-pagination",
+            clickable: true,
+        },
+        navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+        },
+    });
+</script>
+{% endif %}

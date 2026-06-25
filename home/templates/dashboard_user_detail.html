@@ -1,0 +1,130 @@
+{% extends 'dashboard_base.html' %}
+{% load humanize %}
+{% block title %}Chi tiết người dùng{% endblock %}
+{% block nav_users %}active{% endblock %}
+{% block page_title %}Chi tiết người dùng{% endblock %}
+{% block page_sub %}#{{ target.username }}{% endblock %}
+
+{% block content %}
+<div class="page-top">
+  <div><h2>{{ target.get_full_name|default:target.username }}</h2><p>Thành viên từ {{ target.date_joined|date:"d/m/Y" }}</p></div>
+  <a href="/dashboard/users/" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Quay lại</a>
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
+
+  <!-- Thông tin cá nhân -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="card card-body" style="text-align:center">
+      <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin:0 auto 12px">
+        {{ target.username|first|upper }}
+      </div>
+      <div style="font-size:15px;font-weight:800">{{ target.get_full_name|default:target.username }}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">@{{ target.username }}</div>
+      <div style="margin-top:10px">
+        {% if target.is_superuser %}<span class="pill" style="background:#faf5ff;color:var(--purple)">Quản trị viên</span>
+        {% elif target.is_staff %}<span class="pill" style="background:#eff6ff;color:var(--blue)">Nhân viên</span>
+        {% else %}<span class="pill pill-closed">Khách hàng</span>{% endif %}
+        <span class="pill {% if target.is_active %}pill-active{% else %}pill-inactive{% endif %}" style="margin-left:4px">
+          {% if target.is_active %}Đang hoạt động{% else %}Không hoạt động{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Thông tin</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:11px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px">Email</div>
+          <div style="font-size:13px;margin-top:2px">{{ target.email|default:"—" }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px">Ngày tham gia</div>
+          <div style="font-size:13px;margin-top:2px">{{ target.date_joined|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px">Đăng nhập cuối</div>
+          <div style="font-size:13px;margin-top:2px">{{ target.last_login|date:"d/m/Y H:i"|default:"Chưa đăng nhập" }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px">Tổng chi tiêu</div>
+          <div style="font-size:15px;font-weight:800;color:var(--red);margin-top:2px">{{ total_spent|floatformat:0|intcomma }} VND</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px">Tổng đơn hàng</div>
+          <div style="font-size:13px;margin-top:2px">{{ orders|length }} đơn</div>
+        </div>
+      </div>
+    </div>
+
+    {% if not target.is_superuser and target != request.user %}
+    <div class="card card-body" style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px">THAO TÁC</div>
+
+      <form method="post" action="/dashboard/users/{{ target.id }}/toggle-active/">
+        {% csrf_token %}
+        <button type="submit" class="btn {% if target.is_active %}btn-danger{% else %}btn-ghost{% endif %}" style="width:100%">
+          <i class="fa {% if target.is_active %}fa-lock{% else %}fa-lock-open{% endif %}"></i>
+          {% if target.is_active %}Khóa tài khoản{% else %}Mở khóa tài khoản{% endif %}
+        </button>
+      </form>
+
+      {% if request.user.is_superuser %}
+      <form method="post" action="/dashboard/users/{{ target.id }}/toggle-staff/">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost" style="width:100%">
+          <i class="fa fa-user-shield"></i>
+          {% if target.is_staff %}Thu hồi quyền Staff{% else %}Cấp quyền Staff{% endif %}
+        </button>
+      </form>
+      {% endif %}
+
+      <form method="post" action="/dashboard/users/{{ target.id }}/delete/" onsubmit="return confirm('Xóa tài khoản {{ target.username }}? Không thể hoàn tác!')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" style="width:100%">
+          <i class="fa fa-trash"></i> Xóa tài khoản
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Lịch sử đơn hàng -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa fa-bag-shopping" style="color:var(--red);margin-right:6px"></i>Lịch sử đơn hàng</div>
+      <span style="font-size:12px;color:var(--muted)">{{ orders|length }} đơn</span>
+    </div>
+    {% if orders %}
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th style="text-align:center">Chi tiết</th></tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td><strong style="color:var(--red)">#{{ o.code }}</strong></td>
+            <td style="font-size:12.5px;color:var(--muted)">{{ o.create_at|date:"d/m/Y H:i" }}</td>
+            <td style="font-weight:700">{{ o.total|floatformat:0|intcomma }} VND</td>
+            <td style="font-size:12px;color:var(--muted)">{{ o.payment_method }}</td>
+            <td>
+              <span class="pill {% if o.status == 'Hoàn Thành' %}pill-done{% elif o.status == 'Đã hủy' %}pill-cancel{% elif o.status == 'Đang Ship' %}pill-ship{% elif o.status == 'Mới' %}pill-new{% else %}pill-accept{% endif %}">
+                {{ o.status }}
+              </span>
+            </td>
+            <td style="text-align:center">
+              <a href="/dashboard/orders/{{ o.id }}/" class="btn btn-ghost btn-sm btn-icon"><i class="fa fa-eye"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fa fa-bag-shopping"></i>Người dùng chưa có đơn hàng nào</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

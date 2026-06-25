@@ -1,0 +1,129 @@
+{% extends 'dashboard_base.html' %}
+{% load humanize %}
+{% block title %}Chi tiết đơn #{{ order.code }}{% endblock %}
+{% block nav_orders %}active{% endblock %}
+{% block page_title %}Chi tiết đơn hàng{% endblock %}
+{% block page_sub %}#{{ order.code }} — {{ order.create_at|date:"d/m/Y H:i" }}{% endblock %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h2>Đơn hàng #{{ order.code }}</h2>
+    <p>{{ order.create_at|date:"d/m/Y H:i" }}</p>
+  </div>
+  <a href="/dashboard/orders/" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Quay lại</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:16px">
+
+  <!-- LEFT -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Sản phẩm -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Sản phẩm đã đặt</div></div>
+      <table>
+        <thead>
+          <tr><th>Sản phẩm</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th></tr>
+        </thead>
+        <tbody>
+          {% for item in order_products %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                {% if item.product.image %}<img src="{{ item.product.image.url }}" class="img-thumb" alt=""/>{% endif %}
+                <div>
+                  <div style="font-weight:600;font-size:13px">{{ item.product.title }}</div>
+                  {% if item.variant %}<div style="font-size:11.5px;color:var(--muted)">{{ item.variant }}</div>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td>{{ item.price|floatformat:0|intcomma }}</td>
+            <td>{{ item.quantity }}</td>
+            <td style="font-weight:700;color:var(--red)">{{ item.amount|floatformat:0|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+        <div style="text-align:right">
+          <div style="font-size:13px;color:var(--muted)">Tổng cộng</div>
+          <div style="font-size:20px;font-weight:800;color:var(--red)">{{ order.total|floatformat:0|intcomma }} VND</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Địa chỉ giao hàng -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Địa chỉ giao hàng</div></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Họ tên</div><div style="font-weight:600">{{ order.first_name }} {{ order.last_name }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Điện thoại</div><div style="font-weight:600">{{ order.phone }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Email</div><div style="font-weight:600">{{ order.email }}</div></div>
+          <div><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Thành phố</div><div style="font-weight:600">{{ order.city }}</div></div>
+          <div style="grid-column:1/-1"><div style="font-size:11.5px;color:var(--muted);margin-bottom:3px">Địa chỉ</div><div style="font-weight:600">{{ order.address }}</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Cập nhật trạng thái -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Cập nhật trạng thái</div></div>
+      <div class="card-body">
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Trạng thái hiện tại</div>
+          <span class="pill {% if order.status == 'Đã giao hàng' %}pill-done{% elif order.status == 'Đã hủy' %}pill-cancel{% elif order.status == 'Trả hàng' %}pill-return{% elif order.status == 'Chờ xác nhận' %}pill-new{% elif order.status == 'Chờ lấy hàng' %}pill-accept{% elif order.status == 'Chờ giao hàng' %}pill-ship{% else %}pill-accept{% endif %}" style="font-size:13px;padding:5px 14px">
+            {{ order.status }}
+          </span>
+        </div>
+        {% if order.status == 'Đã hủy' %}
+        <div style="font-size:12.5px;color:var(--muted);background:#f8f9fb;border-radius:8px;padding:12px 14px;">
+          <i class="fa fa-circle-info"></i> Đơn hàng đã bị hủy. Hiện không thể chỉnh sửa trạng thái này
+        </div>
+        {% else %}
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Đổi sang</label>
+            <select name="status" class="form-control">
+              {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%"><i class="fa fa-check"></i> Lưu thay đổi</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Thanh toán -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Thanh toán</div></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--muted)">Phương thức</span>
+          <strong>{{ order.payment_method }}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--muted)">Trạng thái TT</span>
+          <span class="pill {% if order.payment_method != 'COD' or order.status == 'Đã giao hàng' %}pill-done{% else %}pill-new{% endif %}">
+            {% if order.payment_method != 'COD' or order.status == 'Đã giao hàng' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
+          </span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--muted)">Tổng tiền</span>
+          <strong style="color:var(--red)">{{ order.total|floatformat:0|intcomma }} VND</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

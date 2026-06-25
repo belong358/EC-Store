@@ -1,0 +1,152 @@
+{% extends 'dashboard_base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block nav_products %}active{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_sub %}{% if product %}Chỉnh sửa: {{ product.title }}{% else %}Tạo sản phẩm mới{% endif %}{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet"/>
+<style>
+  .ql-container{font-family:var(--font);font-size:13.5px;border-radius:0 0 8px 8px!important;border-color:var(--border)!important}
+  .ql-toolbar{border-radius:8px 8px 0 0!important;border-color:var(--border)!important;background:#fafafa}
+  .ql-editor{min-height:160px}
+  .img-preview{max-width:160px;max-height:120px;border-radius:10px;border:1px solid var(--border);object-fit:contain;margin-top:8px}
+  .form-section{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+  .section-title{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-top">
+  <div><h2>{{ page_title }}</h2></div>
+  <a href="/dashboard/products/" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Quay lại</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="productForm">
+  {% csrf_token %}
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
+
+    <!-- LEFT -->
+    <div>
+      <div class="form-section">
+        <div class="section-title">Thông tin cơ bản</div>
+        <div class="form-group">
+          <label class="form-label">Tên sản phẩm *</label>
+          <input type="text" name="title" class="form-control" value="{{ product.title|default:'' }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Từ khóa SEO</label>
+          <input type="text" name="keywords" class="form-control" value="{{ product.keywords|default:'' }}" placeholder="laptop asus, gaming, ..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mô tả ngắn</label>
+          <div id="descEditor" style="height:120px">{% autoescape off %}{{ product.description|default:'' }}{% endautoescape %}</div>
+          <textarea name="description" id="descHidden" style="display:none">{{ product.description|default:'' }}</textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Cấu hình & Đặc điểm</div>
+        <div class="form-group">
+          <label class="form-label">Nội dung chi tiết</label>
+          <div id="detailEditor" style="min-height:200px">{% autoescape off %}{{ product.detail|default:'' }}{% endautoescape %}</div>
+          <textarea name="detail" id="detailHidden" style="display:none">{{ product.detail|default:'' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="form-section">
+        <div class="section-title">Ảnh sản phẩm</div>
+        <div class="form-group">
+          <label class="form-label">Chọn ảnh</label>
+          <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImg(this)"/>
+          {% if product and product.image %}
+          <img src="{{ product.image.url }}" class="img-preview" id="imgPreview"/>
+          {% else %}
+          <img src="" class="img-preview" id="imgPreview" style="display:none"/>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Giá & Kho</div>
+        <div class="form-group">
+          <label class="form-label">Giá gốc (VND) *</label>
+          <input type="number" name="price" class="form-control" value="{{ product.price|default:'0' }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Giá khuyến mãi (VND)</label>
+          <input type="number" name="promotion" class="form-control" value="{{ product.promotion|default:'0' }}"/>
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Tồn kho</label>
+            <input type="number" name="amount" class="form-control" value="{{ product.amount|default:'0' }}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tồn kho tối thiểu</label>
+            <input type="number" name="minamount" class="form-control" value="{{ product.minamount|default:'3' }}"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Phân loại</div>
+        <div class="form-group">
+          <label class="form-label">Danh mục *</label>
+          <select name="category" class="form-control" required>
+            <option value="">-- Chọn danh mục --</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Biến thể</label>
+          <select name="variant" class="form-control">
+            <option value="None" {% if not product or product.variant == 'None' %}selected{% endif %}>Không có</option>
+            <option value="Color" {% if product and product.variant == 'Color' %}selected{% endif %}>Màu sắc</option>
+            <option value="Size" {% if product and product.variant == 'Size' %}selected{% endif %}>Kích thước</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hiển thị</label>
+          <select name="status" class="form-control">
+            <option value="True" {% if not product or product.status == 'True' %}selected{% endif %}>Đang bán</option>
+            <option value="False" {% if product and product.status == 'False' %}selected{% endif %}>Ẩn</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:12px">
+        <i class="fa fa-{% if product %}check{% else %}plus{% endif %}"></i>
+        {% if product %}Lưu thay đổi{% else %}Thêm sản phẩm{% endif %}
+      </button>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+<script>
+  const descQ   = new Quill('#descEditor',  {theme:'snow',modules:{toolbar:[[{header:[2,3,false]}],'bold','italic','underline','link',{list:'ordered'},{list:'bullet'}]}});
+  const detailQ = new Quill('#detailEditor', {theme:'snow',modules:{toolbar:[[{header:[1,2,3,false]}],'bold','italic','underline','link',{list:'ordered'},{list:'bullet'},{color:[]},{background:[]},'image','clean']}});
+
+  document.getElementById('productForm').addEventListener('submit', () => {
+    document.getElementById('descHidden').value   = descQ.root.innerHTML;
+    document.getElementById('detailHidden').value = detailQ.root.innerHTML;
+  });
+
+  function previewImg(input) {
+    const el = document.getElementById('imgPreview');
+    if (input.files && input.files[0]) {
+      el.src = URL.createObjectURL(input.files[0]);
+      el.style.display = 'block';
+    }
+  }
+</script>
+{% endblock %}

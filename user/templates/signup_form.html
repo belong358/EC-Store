@@ -1,0 +1,227 @@
+{% extends 'homebase.html' %}
+
+{% block title %} Đăng ký | {{ setting.title }} {% endblock %}
+
+{% block body %}
+
+	<!-- BREADCRUMB -->
+	<div id="breadcrumb">
+		<div class="container">
+			<ul class="breadcrumb">
+                <li><a href="/">Trang chủ</a></li>
+                <li class="active">Đăng ký</li>
+			</ul>
+		</div>
+	</div>
+	<!-- /BREADCRUMB -->
+
+	<!-- section -->
+	<div class="section" style="padding: 60px 0;">
+		<!-- container -->
+		<div class="container">
+			<!-- row -->
+			<div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading text-center" style="padding: 20px 15px;">
+                            <h3 class="panel-title" style="font-size: 24px; font-weight: bold; text-transform: uppercase;">Đăng Ký</h3>
+                            <p class="text-muted" style="margin-top: 10px; margin-bottom: 0;">Tạo tài khoản mới để trải nghiệm mua sắm</p>
+                        </div>
+                        <div class="panel-body" style="padding: 30px;">
+
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{message.tags}}" role="alert">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.first_name.label }}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" class="form-control" placeholder="Nhập {{ form.first_name.label }}" required style="height: 45px;">
+                                            </div>
+                                            {% if form.first_name.help_text %}<small class="text-muted" style="display: block; margin-top: 5px;">{{ form.first_name.help_text }}</small>{% endif %}
+                                            {% for error in form.first_name.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.last_name.label }}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" class="form-control" placeholder="Nhập {{ form.last_name.label }}" required style="height: 45px;">
+                                            </div>
+                                            {% if form.last_name.help_text %}<small class="text-muted" style="display: block; margin-top: 5px;">{{ form.last_name.help_text }}</small>{% endif %}
+                                            {% for error in form.last_name.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.username.label }}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                                <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" class="form-control" placeholder="Nhập {{ form.username.label }}" required style="height: 45px;" onkeypress="return event.charCode != 32">
+                                            </div>
+                                            {% if form.username.help_text %}<small class="text-muted" style="display: block; margin-top: 5px;">{{ form.username.help_text }}</small>{% endif %}
+                                            {% for error in form.username.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.email.label }}</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon"><i class="fa fa-envelope"></i></span>
+                                                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" class="form-control" placeholder="Nhập {{ form.email.label }}" required style="height: 45px;">
+                                            </div>
+                                            {% if form.email.help_text %}<small class="text-muted" style="display: block; margin-top: 5px;">{{ form.email.help_text }}</small>{% endif %}
+                                            {% for error in form.email.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Mật khẩu</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                                                <input type="password" name="{{ form.password1.name }}" id="id_{{ form.password1.name }}" class="form-control" placeholder="Tối thiểu 8 ký tự, không chứa khoảng trắng" required style="height: 45px;" onkeypress="return event.charCode != 32">
+                                                <span class="input-group-addon toggle-password" style="cursor: pointer;" onclick="togglePassword('id_{{ form.password1.name }}', this)"><i class="fa fa-eye-slash"></i></span>
+                                            </div>
+                                            <small id="pw1-hint" class="text-muted" style="display: block; margin-top: 5px;">Yêu cầu độ dài an toàn.</small>
+                                            {% for error in form.password1.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Xác nhận mật khẩu</label>
+                                            <div class="input-group">
+                                                <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                                                <input type="password" name="{{ form.password2.name }}" id="id_{{ form.password2.name }}" class="form-control" placeholder="Nhập lại mật khẩu" required style="height: 45px;" onkeypress="return event.charCode != 32">
+                                                <span class="input-group-addon toggle-password" style="cursor: pointer;" onclick="togglePassword('id_{{ form.password2.name }}', this)"><i class="fa fa-eye-slash"></i></span>
+                                            </div>
+                                            <small id="pw2-hint" class="text-muted" style="display: block; margin-top: 5px;">Kiểm tra trùng khớp.</small>
+                                            {% for error in form.password2.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% for field in form %}
+                                    {% if field.name != 'first_name' and field.name != 'last_name' and field.name != 'username' and field.name != 'email' and field.name != 'password1' and field.name != 'password2' %}
+                                        <div class="form-group">
+                                            <label>{{ field.label }}</label>
+                                            {{ field }}
+                                            {% for error in field.errors %}<p class="text-danger" style="font-size: 13px; margin-top: 5px; margin-bottom: 0;">{{ error }}</p>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+
+                                <button type="submit" class="btn primary-btn btn-block" style="height: 45px; font-size: 16px; font-weight: bold; margin-top: 25px;">Đăng Ký Tài Khoản <i class="fa fa-arrow-right" style="margin-left: 5px;"></i></button>
+                            </form>
+
+                            {% load socialaccount %}
+                            <div class="social-login" style="margin-top: 25px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                                    <div style="flex: 1; height: 1px; background: #eee;"></div>
+                                    <div style="padding: 0 15px; color: #999; font-size: 13px;">Hoặc tiếp tục bằng</div>
+                                    <div style="flex: 1; height: 1px; background: #eee;"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-6">
+                                        <a href="{% provider_login_url 'google' %}" class="btn btn-default btn-block" style="height: 40px; line-height: 28px; border-color: #df4b37; color: #df4b37;">
+                                            <i class="fab fa-google" style="margin-right: 8px;"></i> Google
+                                        </a>
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <a href="{% provider_login_url 'facebook' %}" class="btn btn-default btn-block" style="height: 40px; line-height: 28px; border-color: #3b5998; color: #3b5998;">
+                                            <i class="fab fa-facebook" style="margin-right: 8px;"></i> Facebook
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                                Đã có tài khoản? <a href="/login" style="color: #FF34B3; font-weight: bold;">Đăng nhập</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+			</div>
+			<!-- /row -->
+		</div>
+		<!-- /container -->
+	</div>
+	<!-- /section -->
+
+    <script>
+        function togglePassword(inputId, iconSpan) {
+            var input = document.getElementById(inputId);
+            var icon = iconSpan.querySelector('i');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = "password";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+
+        var pw1_el = document.getElementById('id_password1');
+        var pw2_el = document.getElementById('id_password2');
+
+        if(pw1_el && pw2_el) {
+            pw1_el.addEventListener('input', function() {
+                var val = this.value;
+                var hint = document.getElementById('pw1-hint');
+                if(val.length === 0) {
+                    hint.innerHTML = "Yêu cầu độ dài an toàn.";
+                    hint.className = "text-muted";
+                } else if(val.length < 8) {
+                    hint.innerHTML = "<i class='fa fa-times-circle'></i> Mật khẩu quá ngắn (ít nhất 8 ký tự).";
+                    hint.className = "text-danger";
+                } else {
+                    hint.innerHTML = "<i class='fa fa-check-circle'></i> Độ dài lý tưởng.";
+                    hint.className = "text-success";
+                }
+                checkMatch();
+            });
+
+            pw2_el.addEventListener('input', checkMatch);
+        }
+
+        function checkMatch() {
+            if(!pw1_el || !pw2_el) return;
+            var pw1 = pw1_el.value;
+            var pw2 = pw2_el.value;
+            var hint = document.getElementById('pw2-hint');
+            
+            if(pw2.length === 0) {
+                hint.innerHTML = "Kiểm tra trùng khớp.";
+                hint.className = "text-muted";
+                return;
+            }
+
+            if(pw1 !== pw2) {
+                hint.innerHTML = "<i class='fa fa-times-circle'></i> Mật khẩu không khớp.";
+                hint.className = "text-danger";
+            } else {
+                hint.innerHTML = "<i class='fa fa-check-circle'></i> Mật khẩu trùng khớp.";
+                hint.className = "text-success";
+            }
+        }
+    </script>
+{% endblock %}

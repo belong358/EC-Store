@@ -1,0 +1,335 @@
+{% extends 'homebase.html' %}
+{% load humanize %}
+{% block title %}Chi tiết đơn hàng #{{ order.code }}{% endblock %}
+{% block description %}{{ setting.description }}{% endblock %}
+{% block keywords %}{{ setting.keywords }}{% endblock %}
+{% block sidebar %}{% include 'sidebar.html' %}{% endblock %}
+
+{% block body %}
+<style>
+.od-wrap { background:#f5f5f5; padding:20px 0 48px; }
+.od-breadcrumb { font-size:12.5px; color:#999; margin-bottom:16px; }
+.od-breadcrumb a { color:#999; text-decoration:none; }
+.od-breadcrumb a:hover { color:#d10024; }
+
+/* CANCELLED FULL PAGE */
+.od-cancelled-wrap { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.07); overflow:hidden; margin-bottom:16px; }
+.od-cancelled-header { background:linear-gradient(135deg,#1a1a2e 0%,#2d1b1b 100%); padding:36px 32px; text-align:center; }
+.od-cancelled-header .cancel-icon { font-size:56px; color:#ef4444; margin-bottom:12px; }
+.od-cancelled-header h2 { color:#fff; font-size:22px; font-weight:800; margin:0 0 6px; }
+.od-cancelled-header p { color:rgba(255,255,255,.65); font-size:13px; margin:0; }
+.od-cancelled-body { padding:24px 32px; }
+.od-cancelled-info { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.od-cancelled-info-item { background:#f8f9fb; border-radius:8px; padding:14px 18px; }
+.od-cancelled-info-item .label { font-size:11.5px; color:#999; font-weight:600; text-transform:uppercase; margin-bottom:4px; }
+.od-cancelled-info-item .value { font-size:14px; font-weight:700; color:#333; }
+.od-product-list-cancelled { margin-top:20px; }
+.od-product-list-cancelled h4 { font-size:13px; font-weight:800; color:#333; text-transform:uppercase; letter-spacing:.3px; margin-bottom:14px; border-bottom:1px solid #f0f0f0; padding-bottom:10px; }
+.od-product-row-s { display:flex; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid #f5f5f5; }
+.od-product-row-s:last-child { border-bottom:none; }
+.od-product-row-s img { width:60px; height:60px; object-fit:contain; border:1px solid #f0f0f0; border-radius:8px; }
+.od-product-row-s .name { flex:1; font-size:13.5px; font-weight:600; color:#555; }
+.od-product-row-s .qty { font-size:12px; color:#999; }
+.od-product-row-s .price { font-size:14px; font-weight:700; color:#999; text-decoration:line-through; }
+.od-back-btn { display:inline-flex; align-items:center; gap:8px; background:#f5f5f5; color:#555; padding:12px 24px; border-radius:8px; font-size:13px; font-weight:700; text-decoration:none; margin-top:20px; }
+.od-back-btn:hover { background:#eee; color:#333; }
+
+/* HEADER */
+.od-header { background:#fff; border-radius:10px; padding:20px 24px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+.od-code { font-size:18px; font-weight:800; color:#333; }
+.od-code span { font-size:13px; color:#999; font-weight:400; margin-left:8px; }
+.od-status-badge { padding:6px 16px; border-radius:20px; font-size:13px; font-weight:700; }
+.badge-new    { background:#fff3e0; color:#e65100; }
+.badge-accept { background:#e3f2fd; color:#1565c0; }
+.badge-prepare{ background:#fff8e1; color:#f57f17; }
+.badge-ship   { background:#e8f5e9; color:#2e7d32; }
+.badge-done   { background:#e8f5e9; color:#1b5e20; }
+.badge-return { background:#f3e8ff; color:#6b21a8; }
+.badge-cancel { background:#fce4ec; color:#b71c1c; }
+
+/* TIMELINE */
+.od-timeline { background:#fff; border-radius:10px; padding:24px 28px 20px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.od-timeline-title { font-size:13px; font-weight:700; color:#333; margin-bottom:20px; }
+.timeline-steps { display:flex; align-items:flex-start; justify-content:space-between; position:relative; }
+.timeline-steps::before { content:''; position:absolute; top:18px; left:0; right:0; height:2px; background:#e0e0e0; z-index:0; }
+.tl-step { flex:1; text-align:center; position:relative; z-index:1; }
+.tl-icon { width:36px; height:36px; border-radius:50%; background:#e0e0e0; color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; font-size:14px; border:3px solid #fff; box-shadow:0 0 0 2px #e0e0e0; transition:all .3s; }
+.tl-step.done   .tl-icon { background:#d10024; box-shadow:0 0 0 2px #d10024; }
+.tl-step.active .tl-icon { background:#d10024; box-shadow:0 0 0 2px #d10024; animation:pulse 1.5s infinite; }
+.tl-label { font-size:11px; font-weight:600; color:#999; line-height:1.4; }
+.tl-step.done .tl-label, .tl-step.active .tl-label { color:#d10024; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 2px #d10024} 50%{box-shadow:0 0 0 5px rgba(209,0,36,.3)} }
+
+/* GRID */
+.od-grid { display:grid; grid-template-columns:1fr 340px; gap:16px; align-items:start; }
+.od-products { background:#fff; border-radius:10px; padding:20px 24px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:16px; }
+.od-section-label { font-size:13px; font-weight:700; color:#333; border-bottom:1px solid #f0f0f0; padding-bottom:12px; margin-bottom:16px; }
+.od-product-row { display:flex; gap:14px; align-items:center; padding:14px 0; border-bottom:1px solid #f5f5f5; }
+.od-product-row:last-child { border-bottom:none; padding-bottom:0; }
+.od-product-img { width:72px; height:72px; object-fit:contain; border:1px solid #f0f0f0; border-radius:8px; flex-shrink:0; }
+.od-product-info { flex:1; min-width:0; }
+.od-product-name a { font-size:13.5px; font-weight:600; color:#333; text-decoration:none; }
+.od-product-name a:hover { color:#d10024; }
+.od-product-meta { font-size:12px; color:#999; margin-top:2px; }
+.od-product-price { text-align:right; flex-shrink:0; }
+.od-unit-price { font-size:12px; color:#999; margin-bottom:2px; }
+.od-total-price { font-size:15px; font-weight:700; color:#d10024; }
+.od-total-row { display:flex; justify-content:space-between; padding:8px 0; font-size:13.5px; border-bottom:1px solid #f5f5f5; }
+.od-total-row:last-child { border-bottom:none; font-size:16px; font-weight:800; color:#d10024; padding-top:12px; }
+.od-total-row span:first-child { color:#777; }
+
+.od-info-card { background:#fff; border-radius:10px; padding:20px 24px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:16px; }
+.od-info-row { display:flex; justify-content:space-between; padding:7px 0; font-size:13px; border-bottom:1px solid #f5f5f5; }
+.od-info-row:last-child { border-bottom:none; }
+.od-info-label { color:#999; font-weight:500; }
+.od-info-value { color:#333; font-weight:600; text-align:right; max-width:60%; }
+.od-payment-badge { display:inline-flex; align-items:center; gap:5px; background:#fff3e0; color:#e65100; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600; }
+.od-actions { display:flex; flex-direction:column; gap:8px; }
+.od-btn { display:block; width:100%; padding:11px; border-radius:8px; font-size:13px; font-weight:700; text-align:center; cursor:pointer; border:none; text-decoration:none; transition:all .2s; }
+.od-btn-primary { background:#d10024; color:#fff; }
+.od-btn-primary:hover { background:#a8001d; color:#fff; }
+.od-btn-cancel  { background:#fff; color:#b71c1c; border:1.5px solid #ef4444; }
+.od-btn-cancel:hover { background:#fce4ec; }
+.od-btn-ghost   { background:#f5f5f5; color:#555; }
+.od-btn-ghost:hover { background:#eee; color:#333; }
+
+/* MODAL hủy */
+.od-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
+.od-modal-overlay.open { display:flex; }
+.od-modal { background:#fff; border-radius:14px; padding:32px; max-width:420px; width:90%; text-align:center; }
+.od-modal h3 { font-size:18px; font-weight:800; color:#333; margin-bottom:10px; }
+.od-modal p { font-size:13.5px; color:#666; margin-bottom:24px; }
+.od-modal-btns { display:flex; gap:12px; }
+.od-modal-btns .od-btn { flex:1; }
+
+@media(max-width:768px){ .od-grid{grid-template-columns:1fr;} .od-cancelled-info{grid-template-columns:1fr;} }
+</style>
+
+<!-- BREADCRUMB -->
+<div id="breadcrumb">
+  <div class="container">
+    <ul class="breadcrumb">
+      <li><a href="/">Trang Chủ</a></li>
+      <li><a href="/user/orders">Đơn hàng</a></li>
+      <li class="active">Chi tiết #{{ order.code }}</li>
+    </ul>
+  </div>
+</div>
+
+<div class="od-wrap">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3">{% include "user_panel.html" %}</div>
+      <div class="col-md-9">
+
+        {% if order.status == 'Đã hủy' %}
+        <!-- ══ GIAO DIỆN ĐƠN HÀNG ĐÃ BỊ HỦY ══ -->
+        <div class="od-cancelled-wrap">
+          <div class="od-cancelled-header">
+            <div class="cancel-icon"><i class="fa fa-circle-xmark"></i></div>
+            <h2>Đơn hàng đã bị hủy</h2>
+            <p>Đơn hàng <strong>#{{ order.code }}</strong> đã bị hủy vào {{ order.update_at|date:"d/m/Y H:i" }}</p>
+          </div>
+          <div class="od-cancelled-body">
+            <div class="od-cancelled-info">
+              <div class="od-cancelled-info-item">
+                <div class="label">Người đặt</div>
+                <div class="value">{{ order.first_name }} {{ order.last_name }}</div>
+              </div>
+              <div class="od-cancelled-info-item">
+                <div class="label">Mã đơn hàng</div>
+                <div class="value">#{{ order.code }}</div>
+              </div>
+              <div class="od-cancelled-info-item">
+                <div class="label">Địa chỉ giao hàng</div>
+                <div class="value">{{ order.address }}, {{ order.city }}</div>
+              </div>
+              <div class="od-cancelled-info-item">
+                <div class="label">Phương thức thanh toán</div>
+                <div class="value">{{ order.payment_method }}</div>
+              </div>
+              <div class="od-cancelled-info-item">
+                <div class="label">Ngày đặt hàng</div>
+                <div class="value">{{ order.create_at|date:"d/m/Y H:i" }}</div>
+              </div>
+              <div class="od-cancelled-info-item">
+                <div class="label">Tổng tiền</div>
+                <div class="value" style="color:#999;text-decoration:line-through">{{ order.total|floatformat:0|intcomma }} VND</div>
+              </div>
+            </div>
+            <div class="od-product-list-cancelled">
+              <h4>🛍️ Sản phẩm trong đơn</h4>
+              {% for rs in orderitems %}
+              <div class="od-product-row-s">
+                <img src="{{ rs.product.image.url }}" alt="{{ rs.product.title }}" loading="lazy">
+                <div class="name">{{ rs.product.title }}</div>
+                <div class="qty">x{{ rs.quantity }}</div>
+                <div class="price">{{ rs.amount|floatformat:0|intcomma }} VND</div>
+              </div>
+              {% endfor %}
+            </div>
+            <a href="/user/orders" class="od-back-btn">
+              <i class="fa fa-arrow-left"></i> Quay lại danh sách đơn hàng
+            </a>
+          </div>
+        </div>
+
+        {% else %}
+        <!-- ══ GIAO DIỆN ĐƠN HÀNG BÌNH THƯỜNG ══ -->
+
+        <!-- Header -->
+        <div class="od-header">
+          <div>
+            <div class="od-code">Đơn hàng #{{ order.code }}<span>{{ order.create_at|date:"d/m/Y H:i" }}</span></div>
+          </div>
+          <span class="od-status-badge
+            {% if order.status == 'Chờ xác nhận' %}badge-new
+            {% elif order.status == 'Chờ lấy hàng' %}badge-accept
+            {% elif order.status == 'Chờ giao hàng' %}badge-prepare
+            {% elif order.status == 'Đã giao hàng' %}badge-done
+            {% elif order.status == 'Trả hàng' %}badge-return
+            {% endif %}">{{ order.status }}</span>
+        </div>
+
+        <!-- Timeline -->
+        <div class="od-timeline">
+          <div class="od-timeline-title">📦 Trạng thái đơn hàng</div>
+          {% with s=order.status %}
+          <div class="timeline-steps">
+            <!-- Bước 1: Chờ xác nhận -->
+            <div class="tl-step {% if s == 'Chờ xác nhận' %}active{% else %}done{% endif %}">
+              <div class="tl-icon"><i class="fa fa-file-alt"></i></div>
+              <div class="tl-label">Chờ xác<br>nhận</div>
+            </div>
+            <!-- Bước 2: Chờ lấy hàng -->
+            <div class="tl-step
+              {% if s == 'Chờ lấy hàng' %}active
+              {% elif s == 'Chờ giao hàng' or s == 'Đã giao hàng' or s == 'Trả hàng' %}done
+              {% endif %}">
+              <div class="tl-icon"><i class="fa fa-check"></i></div>
+              <div class="tl-label">Chờ lấy<br>hàng</div>
+            </div>
+            <!-- Bước 3: Chờ giao hàng -->
+            <div class="tl-step
+              {% if s == 'Chờ giao hàng' %}active
+              {% elif s == 'Đã giao hàng' or s == 'Trả hàng' %}done
+              {% endif %}">
+              <div class="tl-icon"><i class="fa fa-truck"></i></div>
+              <div class="tl-label">Chờ giao<br>hàng</div>
+            </div>
+            <!-- Bước 4: Đã giao hàng -->
+            <div class="tl-step
+              {% if s == 'Đã giao hàng' %}done
+              {% elif s == 'Trả hàng' %}done
+              {% endif %}">
+              <div class="tl-icon"><i class="fa fa-circle-check"></i></div>
+              <div class="tl-label">Đã giao<br>hàng</div>
+            </div>
+          </div>
+          {% endwith %}
+        </div>
+
+        <div class="od-grid">
+          <div>
+            <!-- Sản phẩm -->
+            <div class="od-products">
+              <div class="od-section-label">🛍️ Sản phẩm đã đặt</div>
+              {% for rs in orderitems %}
+              <div class="od-product-row">
+                <a href="/product/{{ rs.product_id }}/{{ rs.product.slug }}/">
+                  <img src="{{ rs.product.image.url }}" alt="{{ rs.product.title }}" class="od-product-img" loading="lazy">
+                </a>
+                <div class="od-product-info">
+                  <div class="od-product-name">
+                    <a href="/product/{{ rs.product_id }}/{{ rs.product.slug }}/">{{ rs.product.title }}</a>
+                  </div>
+                  <div class="od-product-meta">Số lượng: {{ rs.quantity }}</div>
+                </div>
+                <div class="od-product-price">
+                  <div class="od-unit-price">{{ rs.price|floatformat:0|intcomma }} VND</div>
+                  <div class="od-total-price">{{ rs.amount|floatformat:0|intcomma }} VND</div>
+                </div>
+              </div>
+              {% endfor %}
+              <div style="margin-top:16px; padding-top:16px; border-top:1px solid #f0f0f0;">
+                <div class="od-total-row"><span>Tạm tính</span><span>{{ order.total|floatformat:0|intcomma }} VND</span></div>
+                <div class="od-total-row"><span>Phí vận chuyển</span><span style="color:#2e7d32;font-weight:600;">Miễn phí</span></div>
+                <div class="od-total-row"><span>Tổng cộng</span><span>{{ order.total|floatformat:0|intcomma }} VND</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột phải -->
+          <div>
+            <div class="od-info-card">
+              <div class="od-section-label">📍 Địa chỉ nhận hàng</div>
+              <div class="od-info-row"><span class="od-info-label">Người nhận</span><span class="od-info-value">{{ order.first_name }} {{ order.last_name }}</span></div>
+              <div class="od-info-row"><span class="od-info-label">Số điện thoại</span><span class="od-info-value">{{ order.phone }}</span></div>
+              <div class="od-info-row"><span class="od-info-label">Địa chỉ</span><span class="od-info-value">{{ order.address }}, {{ order.city }}{% if order.country %}, {{ order.country }}{% endif %}</span></div>
+            </div>
+            <div class="od-info-card">
+              <div class="od-section-label">💳 Thanh toán</div>
+              <div class="od-info-row">
+                <span class="od-info-label">Phương thức</span>
+                <span class="od-info-value"><span class="od-payment-badge"><i class="fa {% if order.payment_method == 'COD' %}fa-money-bill{% else %}fa-credit-card{% endif %}"></i> {{ order.payment_method }}</span></span>
+              </div>
+              <div class="od-info-row"><span class="od-info-label">Mã đơn</span><span class="od-info-value">#{{ order.code }}</span></div>
+              <div class="od-info-row"><span class="od-info-label">Ngày đặt</span><span class="od-info-value">{{ order.create_at|date:"d/m/Y H:i" }}</span></div>
+            </div>
+
+            <div class="od-actions">
+              <a href="/user/orders" class="od-btn od-btn-ghost"><i class="fa fa-arrow-left"></i> Quay lại đơn hàng</a>
+              {% if order.status == 'Đã giao hàng' %}
+              <a href="/product/{{ orderitems.0.product_id }}/{{ orderitems.0.product.slug }}/" class="od-btn od-btn-primary"><i class="fa fa-star"></i> Đánh giá sản phẩm</a>
+              <button class="od-btn od-btn-cancel" onclick="document.getElementById('returnModal').classList.add('open')">
+                <i class="fa fa-rotate-left"></i> Yêu cầu trả hàng
+              </button>
+              {% endif %}
+              {% if order.status == 'Chờ xác nhận' or order.status == 'Chờ lấy hàng' %}
+              <button class="od-btn od-btn-cancel" onclick="document.getElementById('cancelModal').classList.add('open')">
+                <i class="fa fa-xmark"></i> Hủy đơn hàng
+              </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XÁC NHẬN HỦY -->
+<div class="od-modal-overlay" id="cancelModal">
+  <div class="od-modal">
+    <i class="fa fa-triangle-exclamation" style="font-size:40px;color:#f59e0b;margin-bottom:16px;display:block"></i>
+    <h3>Xác nhận hủy đơn hàng?</h3>
+    <p>Bạn có chắc muốn hủy đơn hàng <strong>#{{ order.code }}</strong> không?<br>Hành động này không thể hoàn tác.</p>
+    <div class="od-modal-btns">
+      <button class="od-btn od-btn-ghost" onclick="document.getElementById('cancelModal').classList.remove('open')">Giữ đơn hàng</button>
+      <form method="post" action="/user/orders/{{ order.id }}/cancel/" style="flex:1">
+        {% csrf_token %}
+        <button type="submit" class="od-btn od-btn-cancel" style="width:100%"><i class="fa fa-xmark"></i> Xác nhận hủy</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XÁC NHẬN TRẢ HÀNG -->
+<div class="od-modal-overlay" id="returnModal">
+  <div class="od-modal">
+    <i class="fa fa-rotate-left" style="font-size:40px;color:#8b5cf6;margin-bottom:16px;display:block"></i>
+    <h3>Yêu cầu trả hàng?</h3>
+    <p>Bạn muốn gửi yêu cầu trả hàng cho đơn <strong>#{{ order.code }}</strong>?<br>Shop sẽ liên hệ bạn để xử lý hoàn tiền/đổi hàng.</p>
+    <div class="od-modal-btns">
+      <button class="od-btn od-btn-ghost" onclick="document.getElementById('returnModal').classList.remove('open')">Đóng</button>
+      <form method="post" action="/user/orders/{{ order.id }}/return/" style="flex:1">
+        {% csrf_token %}
+        <button type="submit" class="od-btn od-btn-cancel" style="width:100%"><i class="fa fa-rotate-left"></i> Xác nhận trả hàng</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

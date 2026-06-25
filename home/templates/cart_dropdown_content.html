@@ -1,0 +1,21 @@
+{% load humanize %}
+{% if shopcart %}
+<div class="cart-list">
+    {% for rs in shopcart %}
+    <div class="product-widget">
+        <div class="product-img">
+            <img src="{{rs.product.image.url}}" alt="" width="60" height="60">
+        </div>
+        <div class="product-body">
+            <h3 class="product-name"><a href="#">{{rs.product}}</a></h3>
+            <h4 class="product-price"><span class="qty">{{rs.quantity}}x</span> {{ rs.product.price|floatformat:0|intcomma }}</h4>
+        </div>
+        <a href="/order/deletefromcart/{{ rs.id }}" class="delete"><i class="fa fa-close"></i></a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="cart-summary">
+	<small>{{totalqty|default:0}} sản phẩm</small>
+	<h5>Tổng: {{ total|floatformat:0|intcomma }} VND</h5>
+</div>
