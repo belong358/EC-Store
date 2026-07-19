@@ -41,7 +41,7 @@
         <td>
           <div style="display:flex;gap:6px;justify-content:center">
             <!-- Xem chi tiết -->
-            <button onclick="openMsg({{ m.id }}, '{{ m.name|escapejs }}', '{{ m.email|escapejs }}', '{{ m.subject|escapejs }}', '{{ m.message|escapejs }}', '{{ m.status }}')"
+            <button onclick="openMsg({{ m.id }}, '{{ m.name|escapejs }}', '{{ m.email|escapejs }}', '{{ m.subject|escapejs }}', '{{ m.message|escapejs }}', '{{ m.status }}', '{{ m.note|escapejs }}')"
               class="btn btn-ghost btn-sm btn-icon" title="Xem"><i class="fa fa-eye"></i></button>
             <!-- Đánh dấu đã đọc -->
             <form method="post" action="/dashboard/messages/{{ m.id }}/update/" style="display:inline">
@@ -80,6 +80,24 @@
     </div>
     <div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Tiêu đề</div><div style="font-weight:600;font-size:14px" id="mSubject"></div></div>
     <div style="background:var(--bg);border-radius:9px;padding:14px;font-size:13.5px;line-height:1.7;color:var(--text);margin-bottom:18px" id="mMessage"></div>
+
+    <div id="mNoteWrap" style="display:none;margin-bottom:18px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px"><i class="fa fa-clock-rotate-left"></i> Lịch sử phản hồi</div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:12px;font-size:12.5px;line-height:1.6;color:#166534;white-space:pre-line" id="mNote"></div>
+    </div>
+
+    <form method="post" id="mReplyForm" style="margin-bottom:18px">
+      {% csrf_token %}
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px"><i class="fa fa-reply"></i> Trả lời khách hàng (sẽ gửi qua email)</div>
+      <textarea name="reply_content" class="form-control" rows="4" placeholder="Nhập nội dung trả lời gửi cho khách..." style="width:100%;resize:vertical" required></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane"></i> Gửi trả lời qua email</button>
+      </div>
+    </form>
+    <div id="mClosedNotice" style="display:none;margin-bottom:18px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:12px;font-size:12.5px;color:var(--muted)">
+      <i class="fa fa-lock"></i> Tin nhắn này đã được đóng (Closed), không thể trả lời thêm. Đổi trạng thái khác nếu bạn muốn tiếp tục trả lời.
+    </div>
+
     <form method="post" id="mForm">
       {% csrf_token %}
       <div style="display:flex;gap:8px;align-items:center">
@@ -123,16 +141,36 @@
 {% block extra_js %}
 <script>
 // Modal xem chi tiết
-function openMsg(id, name, email, subject, message, status) {
+function openMsg(id, name, email, subject, message, status, note) {
   document.getElementById('mName').textContent    = name;
   document.getElementById('mEmail').textContent   = email;
   document.getElementById('mSubject').textContent = subject;
   document.getElementById('mMessage').textContent = message;
   document.getElementById('mForm').action = `/dashboard/messages/${id}/update/`;
+  document.getElementById('mReplyForm').action = `/dashboard/messages/${id}/reply/`;
+  document.getElementById('mReplyForm').reset();
+  const noteWrap = document.getElementById('mNoteWrap');
+  if (note) {
+    document.getElementById('mNote').textContent = note;
+    noteWrap.style.display = 'block';
+  } else {
+    noteWrap.style.display = 'none';
+  }
   const sel = document.querySelector('#mForm select');
   for (let opt of sel.options) { opt.selected = (opt.value === status); }
+  toggleReplyByStatus(status);
   document.getElementById('msgModal').style.display = 'flex';
 }
+
+// Ẩn form trả lời khi tin nhắn ở trạng thái Closed (coi như đã xử lý xong)
+function toggleReplyByStatus(status) {
+  const showReply = status !== 'Closed';
+  document.getElementById('mReplyForm').style.display    = showReply ? 'block' : 'none';
+  document.getElementById('mClosedNotice').style.display = showReply ? 'none'  : 'block';
+}
+document.querySelector('#mForm select').addEventListener('change', function () {
+  toggleReplyByStatus(this.value);
+});
 function closeMsg() { document.getElementById('msgModal').style.display = 'none'; }
 document.getElementById('msgModal').addEventListener('click', function(e){ if(e.target===this) closeMsg(); });
 

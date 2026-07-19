@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from product.models import CommentForm, Comment, Product, Category, Wishlist
 from home.models import Setting
+from order.models import OrderProduct
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils.html import strip_tags
@@ -126,6 +127,36 @@ Trả lời ngắn gọn, định dạng Markdown, súc tích (tối đa 150 t�
 def addcomment(request, id):
     url = request.META.get('HTTP_REFERER')
     if request.method == 'POST':
+        # ── Chặn nếu chưa đăng nhập ──
+        if not request.user.is_authenticated:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Vui lòng đăng nhập để đánh giá.'}, status=403)
+            messages.error(request, "Vui lòng đăng nhập để đánh giá.")
+            return HttpResponseRedirect(url)
+
+        # ── Chặn nếu khách hàng chưa mua và nhận sản phẩm này ──
+        has_purchased = OrderProduct.objects.filter(
+            user=request.user,
+            product_id=id,
+            order__status='Đã giao hàng'
+        ).exists()
+        if not has_purchased:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Bạn cần mua và nhận hàng thành công sản phẩm này trước khi có thể đánh giá.'
+                }, status=403)
+            messages.error(request, "Bạn cần mua và nhận hàng thành công sản phẩm này trước khi có thể đánh giá.")
+            return HttpResponseRedirect(url)
+
+        # ── Chặn nếu đã đánh giá sản phẩm này rồi ──
+        already_reviewed = Comment.objects.filter(user=request.user, product_id=id).exists()
+        if already_reviewed:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'error', 'message': 'Bạn đã đánh giá sản phẩm này rồi.'}, status=403)
+            messages.error(request, "Bạn đã đánh giá sản phẩm này rồi.")
+            return HttpResponseRedirect(url)
+
         form = CommentForm(request.POST)
         if form.is_valid():
             data = Comment()

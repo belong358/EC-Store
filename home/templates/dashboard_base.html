@@ -187,7 +187,12 @@
     </nav>
     <div class="sidebar-footer">
       <div class="s-user">
-        <div class="s-avatar">{{ request.user.username|first|upper }}</div>
+        {% if request.user.userprofile.image %}
+          <img src="{{ request.user.userprofile.image.url }}" alt="{{ request.user.username }}"
+               class="s-avatar" style="object-fit:cover">
+        {% else %}
+          <div class="s-avatar">{{ request.user.username|first|upper }}</div>
+        {% endif %}
         <div>
           <div class="s-name">{{ request.user.get_full_name|default:request.user.username }}</div>
           <div class="s-role">{% if request.user.is_superuser %}Quản trị viên{% else %}Nhân viên{% endif %}</div>
@@ -206,39 +211,41 @@
 
       <div class="topbar-right">
         <!-- Nút Tin nhắn -->
-        <a href="/dashboard/messages/" class="t-btn" title="Tin nhắn">
+        <a href="/dashboard/messages/" class="t-btn" id="messagesBtn" title="Tin nhắn">
           <i class="fa fa-envelope"></i>
-          {% if new_messages > 0 %}<span class="dot"></span>{% endif %}
+          <span class="dot" id="messagesDot" style="display:{% if new_messages > 0 %}block{% else %}none{% endif %}"></span>
         </a>
 
         <!-- Nút Chuông thông báo đơn hàng -->
         <div class="notif-wrap" id="notifWrap">
           <button class="t-btn" id="notifBtn" title="Đơn hàng mới" onclick="toggleNotif(event)">
             <i class="fa fa-bell"></i>
-            {% if pending_orders > 0 %}<span class="dot"></span>{% endif %}
+            <span class="dot" id="notifDot" style="display:{% if pending_orders > 0 %}block{% else %}none{% endif %}"></span>
           </button>
 
           <div class="notif-dropdown" id="notifDropdown">
             <div class="notif-header">
               <span><i class="fa fa-bell"></i> Đơn hàng mới</span>
-              <span class="notif-count">{{ pending_orders }} chờ xử lý</span>
+              <span class="notif-count" id="notifCount">{{ pending_orders }} chờ xử lý</span>
             </div>
 
-            {% if notify_orders %}
-              {% for order in notify_orders %}
-              <a href="/dashboard/orders/{{ order.id }}/" class="notif-item">
-                <div class="notif-icon"><i class="fa fa-bag-shopping"></i></div>
-                <div class="notif-body">
-                  <div class="notif-title">Đơn #{{ order.code }} — {{ order.first_name }} {{ order.last_name }}</div>
-                  <div class="notif-sub">{{ order.total|floatformat:0 }} VND · {{ order.create_at|timesince }} trước</div>
+            <div id="notifList">
+              {% if notify_orders %}
+                {% for order in notify_orders %}
+                <a href="/dashboard/orders/{{ order.id }}/" class="notif-item">
+                  <div class="notif-icon"><i class="fa fa-bag-shopping"></i></div>
+                  <div class="notif-body">
+                    <div class="notif-title">Đơn #{{ order.code }} — {{ order.first_name }} {{ order.last_name }}</div>
+                    <div class="notif-sub">{{ order.total|floatformat:0 }} VND · {{ order.create_at|timesince }} trước</div>
+                  </div>
+                </a>
+                {% endfor %}
+              {% else %}
+                <div class="notif-empty">
+                  <i class="fa fa-check-circle"></i> Không có đơn hàng mới
                 </div>
-              </a>
-              {% endfor %}
-            {% else %}
-              <div class="notif-empty">
-                <i class="fa fa-check-circle"></i> Không có đơn hàng mới
-              </div>
-            {% endif %}
+              {% endif %}
+            </div>
 
             <a href="/dashboard/orders/" class="notif-footer">Xem tất cả đơn hàng →</a>
           </div>
@@ -275,6 +282,55 @@
         document.getElementById("notifDropdown").classList.remove("open");
       }
     });
+
+    // ── Poll đơn hàng mới / tin nhắn mới, cập nhật chuông theo thời gian thực ──
+    // (Trước đây pending_orders/notify_orders chỉ được Django tính 1 lần lúc
+    // render trang, nên nếu admin đứng yên trên 1 trang thì phải đợi chuyển
+    // trang/tải lại mới thấy đơn hàng mới. Đoạn dưới gọi API định kỳ để chuông
+    // tự cập nhật mà không cần tải lại trang.)
+    (function () {
+      var POLL_INTERVAL_MS = 8000; // 8 giây
+
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function renderNotifList(orders) {
+        var list = document.getElementById('notifList');
+        if (!orders.length) {
+          list.innerHTML = '<div class="notif-empty"><i class="fa fa-check-circle"></i> Không có đơn hàng mới</div>';
+          return;
+        }
+        list.innerHTML = orders.map(function (o) {
+          return '<a href="' + o.url + '" class="notif-item">' +
+            '<div class="notif-icon"><i class="fa fa-bag-shopping"></i></div>' +
+            '<div class="notif-body">' +
+            '<div class="notif-title">Đơn #' + escapeHtml(o.code) + ' — ' + escapeHtml(o.name) + '</div>' +
+            '<div class="notif-sub">' + o.total.toLocaleString('vi-VN') + ' VND · ' + escapeHtml(o.timesince) + '</div>' +
+            '</div></a>';
+        }).join('');
+      }
+
+      function pollNotifications() {
+        fetch('/dashboard/api/notifications/', { credentials: 'same-origin' })
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+
+            document.getElementById('notifDot').style.display = data.pending_orders > 0 ? 'block' : 'none';
+            document.getElementById('notifCount').textContent = data.pending_orders + ' chờ xử lý';
+            renderNotifList(data.notify_orders);
+
+            document.getElementById('messagesDot').style.display = data.new_messages > 0 ? 'block' : 'none';
+          })
+          .catch(function () { /* im lặng bỏ qua lỗi mạng tạm thời, sẽ thử lại ở lần poll kế tiếp */ });
+      }
+
+      pollNotifications();
+      setInterval(pollNotifications, POLL_INTERVAL_MS);
+    })();
   </script>
   </body>
 </html>

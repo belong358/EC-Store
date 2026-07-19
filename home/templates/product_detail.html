@@ -109,7 +109,11 @@
 
 							<div>
 <!--								<h3 class="product-price">{{product.price|floatformat:3}} VND </h3>-->
-								<h3 class="product-price">{{ product.price|floatformat:0|intcomma }} VND </h3>
+								<h3 class="product-price">{{ product.final_price|floatformat:0|intcomma }} VND </h3>
+								{% if product.has_promotion %}
+								<span class="price-old">{{ product.price|floatformat:0|intcomma }} VND</span>
+								<span class="badge-sale">-{{ product.promotion }}%</span>
+								{% endif %}
 <!--								<span class="product-available"> Còn Hàng</span>-->
 							</div>
 							<p>{{product.description|safe}}</p>
@@ -234,6 +238,13 @@
 													{% endfor %}
 												{% endif %}
 
+												{% if not user.is_authenticated %}
+													<div class="alert alert-warning small">Vui lòng <a href="/login">đăng nhập</a> để đánh giá.</div>
+												{% elif already_reviewed %}
+													<div class="alert alert-info small">Bạn đã đánh giá sản phẩm này. Cảm ơn bạn!</div>
+												{% elif not can_review %}
+													<div class="alert alert-warning small">Bạn cần <strong>mua và nhận hàng thành công</strong> sản phẩm này trước khi có thể đánh giá.</div>
+												{% else %}
 												<form class="review-form" action="/product/addcomment/{{product.id}}" method="post">
 													{% csrf_token %}
 													<div class="form-group">
@@ -251,12 +262,9 @@
 															</div>
 														</div>
 													</div>
-													{% if user.id is not None %}
 													<button class="primary-btn btn-block" style="border-radius: 4px;">Gửi Đánh Giá</button>
-													{% else %}
-													<div class="alert alert-warning small">Vui lòng <a href="/login">đăng nhập</a> để đánh giá.</div>
-													{% endif %}
 												</form>
+												{% endif %}
 											</div>
 										</div>
 									</div>
@@ -300,7 +308,8 @@
 							<div class="product-body">
 								<p class="product-category">{{ rs.category }}</p>
 								<h3 class="product-name"><a href="/product/{{ rs.id }}/{{rs.slug}}">{{ rs.title }}</a></h3>
-								<h4 class="product-price">{{ rs.price|floatformat:0|intcomma }} VND </h4>
+								{% if rs.has_promotion %}<span class="price-old">{{ rs.price|floatformat:0|intcomma }} VND</span>{% endif %}
+								<h4 class="product-price">{{ rs.final_price|floatformat:0|intcomma }} VND </h4>
 								<div class="product-rating">
 									<i class="fa fa-star{% if rs.avaregereview < 1%}-o empty{% endif%}" style="color:#DC143C"></i>
 									<i class="fa fa-star{% if rs.avaregereview < 2%}-o empty{% endif%}" style="color:#DC143C"></i>

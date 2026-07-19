@@ -86,6 +86,18 @@
         <div style="font-size:12.5px;color:var(--muted);background:#f8f9fb;border-radius:8px;padding:12px 14px;">
           <i class="fa fa-circle-info"></i> Đơn hàng đã bị hủy. Hiện không thể chỉnh sửa trạng thái này
         </div>
+        {% elif order.status == 'Đã giao hàng' %}
+        <div style="font-size:12.5px;color:var(--muted);background:#f8f9fb;border-radius:8px;padding:12px 14px;">
+          <i class="fa fa-circle-check"></i> Đơn hàng đã giao thành công. Đây là trạng thái cuối cùng, không thể chỉnh sửa thêm
+        </div>
+        {% elif order.status == 'Trả hàng' %}
+        <div style="font-size:12.5px;color:var(--muted);background:#f8f9fb;border-radius:8px;padding:12px 14px;">
+          <i class="fa fa-circle-info"></i> Đơn hàng đã được ghi nhận trả hàng. Đây là trạng thái cuối cùng, không thể chỉnh sửa thêm
+        </div>
+        {% elif order.status == 'Chờ xác nhận' %}
+        <div style="font-size:12.5px;color:var(--muted);background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px;">
+          <i class="fa fa-clock"></i> Đơn hàng đang chờ hệ thống xác nhận thanh toán/tiếp nhận. Chưa thể chỉnh sửa trạng thái thủ công lúc này — hệ thống sẽ tự động chuyển sang "Chờ lấy hàng" ngay khi khách hàng thanh toán/đặt hàng thành công.
+        </div>
         {% else %}
         <form method="post">
           {% csrf_token %}
@@ -96,6 +108,9 @@
               <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:6px">
+              <i class="fa fa-circle-info"></i> Chỉ hiện các trạng thái hợp lệ tiếp theo, tránh bấm nhầm vượt bước.
+            </div>
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%"><i class="fa fa-check"></i> Lưu thay đổi</button>
         </form>
@@ -113,9 +128,15 @@
         </div>
         <div style="display:flex;justify-content:space-between;font-size:13px">
           <span style="color:var(--muted)">Trạng thái TT</span>
-          <span class="pill {% if order.payment_method != 'COD' or order.status == 'Đã giao hàng' %}pill-done{% else %}pill-new{% endif %}">
-            {% if order.payment_method != 'COD' or order.status == 'Đã giao hàng' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
+          {% if order.payment_method == 'COD' %}
+          <span class="pill {% if order.status == 'Đã giao hàng' %}pill-done{% else %}pill-new{% endif %}">
+            {% if order.status == 'Đã giao hàng' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
           </span>
+          {% else %}
+          <span class="pill {% if order.status != 'Chờ xác nhận' %}pill-done{% else %}pill-new{% endif %}">
+            {% if order.status != 'Chờ xác nhận' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
+          </span>
+          {% endif %}
         </div>
         <div style="display:flex;justify-content:space-between;font-size:13px">
           <span style="color:var(--muted)">Tổng tiền</span>

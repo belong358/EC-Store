@@ -32,8 +32,10 @@ urlpatterns = [
     path('dashboard-login/',                                   dashboard_views.dashboard_login,            name='dashboard_login'),
     path('dashboard-logout/',                                  dashboard_views.dashboard_logout,           name='dashboard_logout'),
     path('dashboard/',                                          dashboard_views.dashboard,                  name='dashboard'),
+    path('dashboard/api/notifications/',                        dashboard_views.dashboard_notifications_api, name='dashboard_notifications_api'),
     path('dashboard/orders/',                                   dashboard_views.dashboard_orders,           name='dashboard_orders'),
     path('dashboard/orders/<int:order_id>/',                   dashboard_views.dashboard_order_detail,     name='dashboard_order_detail'),
+    path('dashboard/orders/<int:order_id>/delete/',             dashboard_views.dashboard_order_delete,     name='dashboard_order_delete'),
     path('dashboard/orders/reset/',                            dashboard_views.dashboard_orders_reset,     name='dashboard_orders_reset'),
     path('dashboard/products/',                                 dashboard_views.dashboard_products,         name='dashboard_products'),
     path('dashboard/products/add/',                            dashboard_views.dashboard_product_add,      name='dashboard_product_add'),
@@ -49,6 +51,7 @@ urlpatterns = [
     # Messages
     path('dashboard/messages/',                                 dashboard_views.dashboard_messages_list,    name='dashboard_messages'),
     path('dashboard/messages/<int:msg_id>/update/',            dashboard_views.dashboard_message_update,   name='dashboard_message_update'),
+    path('dashboard/messages/<int:msg_id>/reply/',              dashboard_views.dashboard_message_reply,    name='dashboard_message_reply'),
     path('dashboard/messages/<int:msg_id>/delete/',            dashboard_views.dashboard_message_delete,   name='dashboard_message_delete'),
     # Banners
     path('dashboard/banners/',                                  dashboard_views.dashboard_banners,          name='dashboard_banners'),

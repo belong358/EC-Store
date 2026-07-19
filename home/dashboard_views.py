@@ -9,12 +9,14 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncMonth
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.timesince import timesince
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.text import slugify
+from django.http import JsonResponse
 
-from order.models import Order, OrderProduct
+from order.models import Order, OrderProduct, restock_order, STOCK_DEDUCTED_STATUSES, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_LOCKED
 from product.models import Product, Category, Comment
 from home.models import ContactMessage, Banner
 
@@ -22,12 +24,44 @@ from home.models import ContactMessage, Banner
 # ── Shared context (sidebar badges) ──────────────────────────────
 def _ctx(request):
     return {
-        'pending_orders': Order.objects.filter(status='Chờ xác nhận').count(),
+        'pending_orders': Order.objects.filter(admin_seen=False).count(),
         'new_messages':   ContactMessage.objects.filter(status='New').count(),
         'notify_orders':  Order.objects.select_related('user')
-                               .filter(status='Chờ xác nhận')
+                               .filter(admin_seen=False)
                                .order_by('-create_at')[:5],
     }
+
+
+# ════════════════════════════════════════════════════════════════
+#  NOTIFICATIONS API (dùng cho polling — sửa lỗi chuông thông báo
+#  hiển thị chậm/không hiển thị: trước đây pending_orders/notify_orders
+#  chỉ được tính lại mỗi lần render 1 trang mới (full page load), nên
+#  nếu admin đứng yên trên 1 trang thì chuông không tự cập nhật khi có
+#  đơn hàng mới. Endpoint này được JS ở dashboard_base.html gọi định kỳ
+#  (polling) để cập nhật chuông + số tin nhắn mà không cần tải lại trang.
+# ════════════════════════════════════════════════════════════════
+@staff_member_required(login_url='/dashboard-login/')
+def dashboard_notifications_api(request):
+    pending_orders = Order.objects.filter(admin_seen=False).count()
+    new_messages = ContactMessage.objects.filter(status='New').count()
+    notify_orders = (Order.objects.select_related('user')
+                      .filter(admin_seen=False)
+                      .order_by('-create_at')[:5])
+
+    orders_data = [{
+        'id': o.id,
+        'code': o.code,
+        'name': f'{o.first_name} {o.last_name}'.strip(),
+        'total': int(o.total or 0),
+        'timesince': timesince(o.create_at) + ' trước',
+        'url': f'/dashboard/orders/{o.id}/',
+    } for o in notify_orders]
+
+    return JsonResponse({
+        'pending_orders': pending_orders,
+        'new_messages': new_messages,
+        'notify_orders': orders_data,
+    })
 
 
 # ── Quyền: chỉ Quản trị viên (superuser) mới được vào ────────────
@@ -105,8 +139,16 @@ def dashboard(request):
     status_labels = [s['status'] for s in st_qs]
     status_data   = [s['count']  for s in st_qs]
 
-    recent_orders = Order.objects.select_related('user').order_by('-create_at')[:8]
+    recent_orders = (Order.objects
+                      .select_related('user')
+                      .prefetch_related('orderproduct_set__product')
+                      .order_by('-create_at')[:8])
+    # Chỉ tính "Đã bán" cho các đơn thực sự đã xử lý (kho đã bị trừ): loại bỏ
+    # đơn "Chờ xác nhận" (chưa chắc chắn sẽ bán) và "Đã hủy"/"Trả hàng" (không
+    # còn được coi là đã bán). Trước đây tính luôn cả những đơn này nên sản
+    # phẩm chưa từng bán thật/đã bị hủy vẫn lọt vào danh sách "Sản phẩm bán chạy".
     top_products  = (OrderProduct.objects
+                     .filter(order__status__in=STOCK_DEDUCTED_STATUSES)
                      .values('product__id','product__title','product__image','product__price')
                      .annotate(total_sold=Sum('quantity'), revenue=Sum('amount'))
                      .order_by('-total_sold')[:5])
@@ -136,6 +178,10 @@ def dashboard_orders(request):
     if status_filter:
         orders = orders.filter(status=status_filter)
 
+    # Admin đã mở danh sách đơn hàng ⇒ coi như đã "thấy" các đơn mới,
+    # để chuông thông báo không còn báo lại những đơn này nữa.
+    Order.objects.filter(admin_seen=False).update(admin_seen=True)
+
     ctx = _ctx(request)
     ctx.update({'orders': orders, 'status_filter': status_filter, 'status_choices': Order.STATUS})
     return render(request, 'dashboard_orders.html', ctx)
@@ -146,19 +192,33 @@ def dashboard_order_detail(request, order_id):
     order         = get_object_or_404(Order, id=order_id)
     order_products = OrderProduct.objects.filter(order=order).select_related('product')
 
+    if not order.admin_seen:
+        order.admin_seen = True
+        order.save(update_fields=['admin_seen'])
+
     if request.method == 'POST':
-        if order.status == 'Đã hủy':
-            flash.warning(request, f'Đơn hàng #{order.code} đã bị hủy, không thể thay đổi trạng thái.')
+        if order.status in ORDER_STATUS_LOCKED:
+            flash.warning(request, f'Đơn hàng #{order.code} đang ở trạng thái "{order.status}", không thể thay đổi thêm.')
+        elif order.status == 'Chờ xác nhận':
+            flash.warning(request, f'Đơn hàng #{order.code} đang chờ hệ thống xác nhận thanh toán, chưa thể chỉnh sửa trạng thái thủ công.')
         else:
             new_status = request.POST.get('status')
-            if new_status:
+            allowed = ORDER_STATUS_TRANSITIONS.get(order.status, [order.status])
+            if new_status not in allowed:
+                flash.error(request, f'Không thể chuyển từ "{order.status}" sang "{new_status}" — vui lòng đi đúng thứ tự quy trình.')
+            elif new_status:
+                old_status = order.status
+                # ── Hoàn tồn kho nếu chuyển sang Đã hủy/Trả hàng và kho đã từng bị trừ ──
+                if new_status in ('Đã hủy', 'Trả hàng') and old_status != new_status:
+                    restock_order(order, old_status)
                 order.status = new_status
                 order.save()
                 flash.success(request, f'Đã cập nhật trạng thái đơn hàng #{order.code}')
         return redirect('dashboard_orders')
 
     ctx = _ctx(request)
-    ctx.update({'order': order, 'order_products': order_products, 'status_choices': Order.STATUS})
+    next_status_choices = [(v, l) for v, l in Order.STATUS if v in ORDER_STATUS_TRANSITIONS.get(order.status, [order.status])]
+    ctx.update({'order': order, 'order_products': order_products, 'status_choices': next_status_choices})
     return render(request, 'dashboard_order_detail.html', ctx)
 
 
@@ -262,8 +322,9 @@ def dashboard_product_delete(request, product_id):
 @staff_member_required(login_url='/dashboard-login/')
 def dashboard_users(request):
     from django.core.paginator import Paginator
+
     q     = request.GET.get('q', '')
-    users = User.objects.order_by('-date_joined')
+    users = User.objects.select_related('online_status').order_by('-date_joined')
     if q:
         users = users.filter(username__icontains=q) | User.objects.filter(email__icontains=q)
     paginator = Paginator(users, 20)
@@ -292,6 +353,49 @@ def dashboard_messages_list(request):
         'status_choices': ContactMessage.STATUS,
     })
     return render(request, 'dashboard_messages.html', ctx)
+
+
+@staff_member_required(login_url='/dashboard-login/')
+def dashboard_message_reply(request, msg_id):
+    msg = get_object_or_404(ContactMessage, id=msg_id)
+    if request.method == 'POST':
+        if msg.status == 'Closed':
+            flash.error(request, 'Tin nhắn đã Closed, không thể trả lời. Vui lòng đổi trạng thái khác trước.')
+            return redirect('dashboard_messages')
+
+        reply_content = request.POST.get('reply_content', '').strip()
+        if not reply_content:
+            flash.error(request, 'Nội dung trả lời không được để trống')
+            return redirect('dashboard_messages')
+
+        try:
+            from django.core.mail import send_mail
+            send_mail(
+                subject=f'[EleStore] Re: {msg.subject}',
+                message=(
+                    f'Chào {msg.name},\n\n'
+                    f'{reply_content}\n\n'
+                    f'---\n'
+                    f'Tin nhắn gốc của bạn:\n"{msg.message}"\n\n'
+                    f'Trân trọng,\nEleStore'
+                ),
+                from_email=None,  # dùng DEFAULT_FROM_EMAIL trong settings
+                recipient_list=[msg.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            flash.error(request, f'Gửi email thất bại: {e}. Đơn vị lưu trữ lại chưa được gửi.')
+            return redirect('dashboard_messages')
+
+        # Lưu lại nội dung admin đã trả lời để xem lại sau này
+        stamp = timezone.now().strftime('%d/%m/%Y %H:%M')
+        note_line = f'[{stamp}] Đã trả lời: {reply_content}'
+        msg.note = (msg.note + '\n' + note_line) if msg.note else note_line
+        msg.status = 'Read'
+        msg.save()
+
+        flash.success(request, f'Đã gửi email trả lời tới {msg.email}')
+    return redirect('dashboard_messages')
 
 
 @staff_member_required(login_url='/dashboard-login/')
@@ -523,6 +627,21 @@ def dashboard_message_delete(request, msg_id):
         msg.delete()
         flash.success(request, 'Đã xóa tin nhắn thành công!')
     return redirect('dashboard_messages')
+
+
+@staff_member_required(login_url='/dashboard-login/')
+def dashboard_order_delete(request, order_id):
+    """Xóa 1 đơn hàng cụ thể — chỉ chấp nhận POST. Hoàn lại tồn kho nếu đơn
+    đang ở trạng thái đã từng bị trừ kho (xem STOCK_DEDUCTED_STATUSES),
+    tránh làm sai lệch số lượng tồn kho sau khi xóa."""
+    order = get_object_or_404(Order, id=order_id)
+    if request.method == 'POST':
+        code = order.code
+        if order.status in STOCK_DEDUCTED_STATUSES:
+            restock_order(order, order.status)
+        order.delete()  # OrderProduct liên quan tự động bị xóa theo (on_delete=CASCADE)
+        flash.success(request, f'Đã xóa đơn hàng #{code}')
+    return redirect('dashboard_orders')
 
 
 @staff_member_required(login_url='/dashboard-login/')

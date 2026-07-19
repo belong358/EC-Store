@@ -8,7 +8,7 @@
         </div>
         <div class="product-body">
             <h3 class="product-name"><a href="#">{{rs.product}}</a></h3>
-            <h4 class="product-price"><span class="qty">{{rs.quantity}}x</span> {{ rs.product.price|floatformat:0|intcomma }}</h4>
+            <h4 class="product-price"><span class="qty">{{rs.quantity}}x</span> {{ rs.product.final_price|floatformat:0|intcomma }}{% if rs.product.has_promotion %} <span style="text-decoration:line-through;color:#aaa;font-size:11px;">{{ rs.product.price|floatformat:0|intcomma }}</span>{% endif %}</h4>
         </div>
         <a href="/order/deletefromcart/{{ rs.id }}" class="delete"><i class="fa fa-close"></i></a>
     </div>

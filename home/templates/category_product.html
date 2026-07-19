@@ -189,13 +189,17 @@
               <a href="/product/{{rs.id}}/{{rs.slug}}">
                 <div class="product-img">
                   <img src="{{ rs.image.url }}" alt="{{ rs.title }}">
-                  <div class="product-label"><span class="new">NEW</span></div>
+                  <div class="product-label">
+                  <span class="new">NEW</span>
+                  {% if rs.has_promotion %}<span class="sale">-{{ rs.promotion }}%</span>{% endif %}
+                </div>
                 </div>
               </a>
               <div class="product-body">
                 <p class="product-category">{{ rs.category }}</p>
                 <h3 class="product-name"><a href="/product/{{rs.id}}/{{rs.slug}}">{{ rs.title }}</a></h3>
-                <h4 class="product-price">{{ rs.price|floatformat:0|intcomma }}</h4>
+                {% if rs.has_promotion %}<span class="price-old">{{ rs.price|floatformat:0|intcomma }}</span>{% endif %}
+                <h4 class="product-price">{{ rs.final_price|floatformat:0|intcomma }}</h4>
                 <div class="product-rating">
                   <i class="fa fa-star{% if rs.avaregereview < 1 %}-o empty{% endif %}" style="color:#DC143C"></i>
                   <i class="fa fa-star{% if rs.avaregereview < 2 %}-o empty{% endif %}" style="color:#DC143C"></i>

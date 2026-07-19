@@ -109,6 +109,18 @@ class ContactMessage(models.Model):
         return self.name
 
 
+# ── Trạng thái online của người dùng ──────────────────────────
+from django.contrib.auth.models import User as AuthUser
+
+class UserOnlineStatus(models.Model):
+    user       = models.OneToOneField(AuthUser, on_delete=models.CASCADE, related_name='online_status')
+    is_online  = models.BooleanField(default=False)
+    last_seen  = models.DateTimeField(null=True, blank=True)  # thời điểm đăng xuất
+
+    def __str__(self):
+        return f'{self.user.username} — {"Online" if self.is_online else "Offline"}'
+
+
 # Form liên hệ
 class ContactForm(ModelForm):
     class Meta:

@@ -48,9 +48,8 @@
     }
     
     #chatbot-header {
-        background: white;
-        padding: 20px;
-        border-bottom: 1px solid #f1f1f1;
+        background: linear-gradient(135deg, var(--primary-color), #a5001c);
+        padding: 18px 20px;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -59,23 +58,25 @@
     .ai-avatar {
         width: 40px;
         height: 40px;
-        background: var(--primary-color);
+        background: rgba(255,255,255,0.15);
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
         font-size: 20px;
+        flex-shrink: 0;
     }
 
     .header-info h4 {
         margin: 0;
         font-size: 16px;
-        color: var(--secondary-color);
+        color: white;
+        font-weight: 700;
     }
     .header-info span {
         font-size: 12px;
-        color: #10b981;
+        color: rgba(255,255,255,0.85);
         display: flex;
         align-items: center;
         gap: 4px;
@@ -84,7 +85,7 @@
         content: "";
         width: 8px;
         height: 8px;
-        background: #10b981;
+        background: #4ade80;
         border-radius: 50%;
     }
     
@@ -204,6 +205,121 @@
         display: flex;
         gap: 12px;
         align-items: center;
+        position: relative;
+    }
+
+    #emoji-toggle {
+        background: #f8fafc;
+        border: 1px solid #edf2f7;
+        color: #a0aec0;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    #emoji-toggle:hover, #emoji-toggle.active {
+        background: rgba(209, 0, 36, 0.08);
+        color: var(--primary-color);
+        border-color: rgba(209, 0, 36, 0.2);
+    }
+
+    #emoji-panel {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 12px;
+        right: 12px;
+        height: 260px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        border: 1px solid #edf2f7;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 10;
+    }
+    #emoji-panel.open { display: flex; }
+
+    #emoji-tabs {
+        display: flex;
+        gap: 2px;
+        padding: 8px 8px 0;
+        border-bottom: 1px solid #f1f1f1;
+        overflow-x: auto;
+        flex-shrink: 0;
+    }
+    #emoji-tabs::-webkit-scrollbar { display: none; }
+    .emoji-tab {
+        border: none;
+        background: none;
+        font-size: 16px;
+        padding: 8px 10px;
+        cursor: pointer;
+        border-radius: 8px 8px 0 0;
+        flex-shrink: 0;
+        opacity: 0.5;
+        transition: all 0.15s;
+    }
+    .emoji-tab:hover { opacity: 0.8; background: #f8fafc; }
+    .emoji-tab.active { opacity: 1; background: rgba(209,0,36,0.08); }
+
+    #emoji-search-wrap { padding: 8px 10px; flex-shrink: 0; }
+    #emoji-search {
+        width: 100%;
+        border: 1px solid #edf2f7;
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 7px 12px;
+        font-size: 12.5px;
+        outline: none;
+        box-sizing: border-box;
+    }
+    #emoji-search:focus { border-color: var(--primary-color); }
+
+    #emoji-category-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #a0aec0;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 6px 12px 2px;
+        flex-shrink: 0;
+    }
+
+    #emoji-grid {
+        flex: 1;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 2px;
+        padding: 4px 10px 10px;
+        align-content: start;
+    }
+    #emoji-grid::-webkit-scrollbar { width: 4px; }
+    #emoji-grid::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .emoji-item {
+        border: none;
+        background: none;
+        font-size: 20px;
+        padding: 5px;
+        cursor: pointer;
+        border-radius: 8px;
+        line-height: 1;
+        transition: background 0.15s, transform 0.1s;
+    }
+    .emoji-item:hover { background: #f8fafc; transform: scale(1.15); }
+    #emoji-empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: #a0aec0;
+        font-size: 12.5px;
+        padding: 20px 0;
     }
     
     #chat-input {
@@ -244,11 +360,11 @@
     .close-btn {
         margin-left: auto;
         cursor: pointer;
-        color: #a0aec0;
+        color: rgba(255,255,255,0.85);
         font-size: 20px;
         transition: color 0.2s;
     }
-    .close-btn:hover { color: var(--primary-color); }
+    .close-btn:hover { color: white; }
 </style>
 
 <!-- GSAP CDN -->
@@ -276,6 +392,17 @@
     </div>
     
     <div id="chatbot-input-area">
+        <button id="emoji-toggle" title="Chọn emoji"><i class="fa-solid fa-face-smile"></i></button>
+
+        <div id="emoji-panel">
+            <div id="emoji-tabs"></div>
+            <div id="emoji-search-wrap">
+                <input type="text" id="emoji-search" placeholder="Tìm emoji...">
+            </div>
+            <div id="emoji-category-label"></div>
+            <div id="emoji-grid"></div>
+        </div>
+
         <input type="text" id="chat-input" placeholder="Hỏi tôi bất cứ điều gì...">
         <button id="send-chat"><i class="fa fa-paper-plane"></i></button>
     </div>
@@ -396,4 +523,120 @@
 
     sendBtn.onclick = sendMessage;
     chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+    // ══════════════════ EMOJI PICKER ══════════════════
+    const EMOJI_DATA = {
+        'Thường dùng':   { icon: '🕒', list: [] },
+        'Mặt cười':      { icon: '😀', list: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😋','😛','😜','🤪','🤨','🧐','🤓','😎','🤗','🤔','😐','😑','🙄','😏','😣','😮','😴','😌','😔','🙁','😢','😭','😤','😠','😡','🥳','🥺','🤠','🤡','👻','💀','🤖','😱','😨','🥶','🥵','😷','🤒','🤕'] },
+        'Cử chỉ':        { icon: '👋', list: ['👋','🤚','🖐️','✋','👌','🤌','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','👏','🙌','👐','🙏','💪','🦾','👀','👶','🧑','👨','👩','🧓','👨‍💻','👩‍💻','🤝','💅','✍️'] },
+        'Đồ ăn':         { icon: '🍔', list: ['🍏','🍎','🍊','🍋','🍌','🍉','🍇','🍓','🍈','🍒','🍑','🥭','🍍','🥥','🍅','🥑','🥦','🌽','🥕','🍞','🥐','🧀','🍳','🥓','🍗','🍔','🍟','🍕','🌭','🌮','🌯','🍣','🍜','🍰','🎂','🍩','🍪','🍫','🍬','🍭','☕','🍵','🧃','🥤','🍺','🍻','🍷'] },
+        'Hoạt động':     { icon: '⚽', list: ['⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🏓','🏸','🏒','🏹','🎣','🥊','🥋','🎽','🛹','🎿','🏆','🥇','🥈','🥉','🎮','🎲','🎯','🎳','🎸','🎮','🕹️','🎨','🎬'] },
+        'Du lịch':       { icon: '🚗', list: ['🚗','🚕','🚙','🚌','🏎️','🚓','🚑','🚒','🚚','🚲','🛵','✈️','🚀','🚁','⛵','🚢','🚂','🚆','🗼','🗽','🏰','🎡','🎢','⛰️','🏔️','🏖️','🏝️','🌋','🏕️','⛺'] },
+        'Đồ vật':        { icon: '💡', list: ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','📷','📹','☎️','📺','📻','⏰','🔋','🔌','💡','🔦','🕯️','💰','💵','💳','💎','🧰','🔧','🔨','⚙️','🔩','🔪','💊','🚪','🛏️','🛋️','🪑','🚿'] },
+        'Ký hiệu':       { icon: '❤️', list: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','✅','❌','⭕','❗','❓','‼️','⁉️','⚠️','♻️','💯','💢','💤','🔥','✨','🎉','🎊','🎁'] },
+        'Cờ':            { icon: '🚩', list: ['🏁','🚩','🎌','🏳️','🏴','🇻🇳','🇺🇸','🇬🇧','🇯🇵','🇰🇷','🇨🇳','🇫🇷','🇩🇪'] },
+    };
+    const FREQ_KEY = 'elestore_chat_frequent_emoji';
+
+    function loadFrequent() {
+        try { return JSON.parse(localStorage.getItem(FREQ_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function saveFrequent(emoji) {
+        let freq = loadFrequent().filter(e => e !== emoji);
+        freq.unshift(emoji);
+        freq = freq.slice(0, 24);
+        try { localStorage.setItem(FREQ_KEY, JSON.stringify(freq)); } catch (e) {}
+    }
+
+    const emojiToggle   = document.getElementById('emoji-toggle');
+    const emojiPanel    = document.getElementById('emoji-panel');
+    const emojiTabs     = document.getElementById('emoji-tabs');
+    const emojiGrid     = document.getElementById('emoji-grid');
+    const emojiSearch   = document.getElementById('emoji-search');
+    const emojiCatLabel = document.getElementById('emoji-category-label');
+
+    let activeCategory = 'Thường dùng';
+
+    function renderTabs() {
+        emojiTabs.innerHTML = '';
+        Object.keys(EMOJI_DATA).forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = 'emoji-tab' + (cat === activeCategory ? ' active' : '');
+            btn.textContent = EMOJI_DATA[cat].icon;
+            btn.title = cat;
+            btn.onclick = (e) => { e.stopPropagation(); activeCategory = cat; emojiSearch.value = ''; renderTabs(); renderGrid(); };
+            emojiTabs.appendChild(btn);
+        });
+    }
+
+    function renderGrid() {
+        emojiCatLabel.textContent = activeCategory;
+        emojiGrid.innerHTML = '';
+        EMOJI_DATA['Thường dùng'].list = loadFrequent();
+        const list = EMOJI_DATA[activeCategory].list;
+
+        if (!list.length) {
+            emojiGrid.innerHTML = '<div id="emoji-empty">Chưa có emoji nào được dùng gần đây</div>';
+            return;
+        }
+        list.forEach(emo => {
+            const btn = document.createElement('button');
+            btn.className = 'emoji-item';
+            btn.textContent = emo;
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                chatInput.value += emo;
+                chatInput.focus();
+                saveFrequent(emo);
+            };
+            emojiGrid.appendChild(btn);
+        });
+    }
+
+    function renderSearch(term) {
+        term = term.trim();
+        if (!term) { renderGrid(); return; }
+        emojiCatLabel.textContent = 'Kết quả tìm kiếm';
+        emojiGrid.innerHTML = '';
+        const seen = new Set();
+        const results = [];
+        Object.keys(EMOJI_DATA).forEach(cat => {
+            if (cat === 'Thường dùng') return;
+            if (cat.toLowerCase().includes(term.toLowerCase())) {
+                EMOJI_DATA[cat].list.forEach(e => { if (!seen.has(e)) { seen.add(e); results.push(e); } });
+            }
+        });
+        if (!results.length) {
+            emojiGrid.innerHTML = '<div id="emoji-empty">Không tìm thấy emoji phù hợp</div>';
+            return;
+        }
+        results.forEach(emo => {
+            const btn = document.createElement('button');
+            btn.className = 'emoji-item';
+            btn.textContent = emo;
+            btn.onclick = (e) => { e.stopPropagation(); chatInput.value += emo; chatInput.focus(); saveFrequent(emo); };
+            emojiGrid.appendChild(btn);
+        });
+    }
+
+    renderTabs();
+    renderGrid();
+
+    emojiSearch.addEventListener('input', (e) => renderSearch(e.target.value));
+
+    emojiPanel.addEventListener('click', (e) => e.stopPropagation());
+
+    emojiToggle.onclick = (e) => {
+        e.stopPropagation();
+        emojiPanel.classList.toggle('open');
+        emojiToggle.classList.toggle('active');
+        if (emojiPanel.classList.contains('open')) { renderGrid(); }
+    };
+
+    document.addEventListener('click', (e) => {
+        if (!emojiPanel.contains(e.target) && e.target !== emojiToggle && !emojiToggle.contains(e.target)) {
+            emojiPanel.classList.remove('open');
+            emojiToggle.classList.remove('active');
+        }
+    });
 </script>

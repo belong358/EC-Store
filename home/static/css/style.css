@@ -982,6 +982,22 @@ textarea.input {
 	product
 \*----------------------------*/
 
+/* Sửa lỗi các thẻ sản phẩm bị lệch/tách hàng: Bootstrap 3 dùng float cho
+   .col-*, nên nếu 1 thẻ sản phẩm cao hơn thẻ bên cạnh (do có dòng giá gốch
+   gạch, tên sản phẩm dài hơn...) thì hàng sau sẽ bị "leo" lên lệch hàng.
+   Chỉ áp dụng cho các .row chứa sản phẩm (không ảnh hưởng .row ở header/
+   footer/form khác) bằng :has(), ép các cột trong cùng 1 hàng cao bằng nhau. */
+.row:has(> [class*="col-"] > .product) {
+  display: flex;
+  flex-wrap: wrap;
+}
+.row:has(> [class*="col-"] > .product) > [class*="col-"] {
+  display: flex;
+}
+.row:has(> [class*="col-"] > .product) > [class*="col-"] > .product {
+  width: 100%;
+}
+
 .product {
   position: relative;
   margin: 8px 0px;
@@ -1085,6 +1101,17 @@ textarea.input {
 .product .product-body .product-price {
   color: #D10024;
   font-size: 18px;
+}
+
+/* Giá gốc khi sản phẩm đang giảm giá (dùng trong category_product.html,
+   product_detail.html qua class "price-old") — trước đây chưa có style
+   trong file CSS thực sự được Django phục vụ (home/static/css/style.css),
+   nên giá gốc không bị gạch ngang. */
+.price-old {
+  text-decoration: line-through;
+  color: #999;
+  font-size: 13px;
+  margin-right: 6px;
 }
 
 .product .product-body .product-price .product-old-price {

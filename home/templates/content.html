@@ -1,6 +1,11 @@
 <!-- SECTION -->
 {% load static %}
 {% load humanize %}
+<style>
+.price-old { text-decoration: line-through; color: #999; font-size: 13px; margin-right: 6px; }
+.product-price { color: #D10024; font-size: 16px; font-weight: 700; display: inline-block; }
+</style>
+
 		<div class="section">
 			<!-- container -->
 			<div class="container">
@@ -92,13 +97,14 @@
 												<img src="{{ rs.image.url }}" alt="">
 												<div class="product-label">
 													<span class="new">NEW</span>
+													{% if rs.has_promotion %}<span class="sale">-{{ rs.promotion }}%</span>{% endif %}
 												</div>
 											</div>
 											</a>
 											<div class="product-body">
 												<p class="product-category">{{rs.category}}</p>
 												<h3 class="product-name"><a href="/product/{{rs.id}}/{{rs.slug}}">{{ rs.title}}</a></h3>
-												<h4 class="product-price">{{ rs.price|floatformat:0|intcomma }} </h4>
+												{% if rs.has_promotion %}<span class="price-old">{{ rs.price|floatformat:0|intcomma }}</span>{% endif %}<h4 class="product-price">{{ rs.final_price|floatformat:0|intcomma }} </h4>
 												<div class="product-rating">
 													<i class="fa fa-star{% if rs.avaregereview < 1%}-o empty{% endif%}" style="color:#DC143C"></i>
 													<i class="fa fa-star{% if rs.avaregereview < 2%}-o empty{% endif%}" style="color:#DC143C"></i>
@@ -170,13 +176,14 @@
 												<img src="{{ rs.image.url }}" alt="">
 												<div class="product-label">
 													<span class="new">HOT</span>
+													{% if rs.has_promotion %}<span class="sale">-{{ rs.promotion }}%</span>{% endif %}
 												</div>
 											</div>
 											</a>
 											<div class="product-body">
 												<p class="product-category">{{rs.category}}</p>
 												<h3 class="product-name"><a href="/product/{{rs.id}}/{{rs.slug}}">{{ rs.title}}</a></h3>
-												<h4 class="product-price">{{ rs.price|floatformat:0|intcomma }} </h4>
+												{% if rs.has_promotion %}<span class="price-old">{{ rs.price|floatformat:0|intcomma }}</span>{% endif %}<h4 class="product-price">{{ rs.final_price|floatformat:0|intcomma }} </h4>
 												<div class="product-rating">
 													<i class="fa fa-star{% if rs.avaregereview < 1%}-o empty{% endif%}" style="color:#DC143C"></i>
 													<i class="fa fa-star{% if rs.avaregereview < 2%}-o empty{% endif%}" style="color:#DC143C"></i>
@@ -239,7 +246,7 @@
 									<div class="product-body">
 										<p class="product-category">{{ product.category.title }}</p>
 										<h3 class="product-name"><a href="/product/{{ product.id }}/{{ product.slug }}">{{ product.title }}</a></h3>
-										<h4 class="product-price">{{ product.price|floatformat:0|intcomma }} VND</h4>
+										{% if product.has_promotion %}<span class="price-old">{{ product.price|floatformat:0|intcomma }} VND</span>{% endif %}<h4 class="product-price">{{ product.final_price|floatformat:0|intcomma }} VND</h4>
 									</div>
 								</div>
 								{% endfor %}
@@ -268,7 +275,7 @@
 									<div class="product-body">
 										<p class="product-category">{{ product.category.title }}</p>
 										<h3 class="product-name"><a href="/product/{{ product.id }}/{{ product.slug }}">{{ product.title }}</a></h3>
-										<h4 class="product-price">{{ product.price|floatformat:0|intcomma }} VND</h4>
+										{% if product.has_promotion %}<span class="price-old">{{ product.price|floatformat:0|intcomma }} VND</span>{% endif %}<h4 class="product-price">{{ product.final_price|floatformat:0|intcomma }} VND</h4>
 									</div>
 								</div>
 								{% endfor %}
@@ -300,7 +307,7 @@
 									<div class="product-body">
 										<p class="product-category">{{ product.category.title }}</p>
 										<h3 class="product-name"><a href="/product/{{ product.id }}/{{ product.slug }}">{{ product.title }}</a></h3>
-										<h4 class="product-price">{{ product.price|floatformat:0|intcomma }} VND</h4>
+										{% if product.has_promotion %}<span class="price-old">{{ product.price|floatformat:0|intcomma }} VND</span>{% endif %}<h4 class="product-price">{{ product.final_price|floatformat:0|intcomma }} VND</h4>
 									</div>
 								</div>
 								{% endfor %}

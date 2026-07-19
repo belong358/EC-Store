@@ -92,6 +92,24 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('category_detail', kwargs={'slug': self.slug})
 
+    @property
+    def has_promotion(self):
+        """True nếu sản phẩm đang có phần trăm khuyến mãi hợp lệ (1-99%)."""
+        return 0 < self.promotion < 100
+
+    @property
+    def final_price(self):
+        """
+        Giá thực tế khách hàng phải trả sau khi áp dụng khuyến mãi (promotion %).
+        Nếu không có khuyến mãi (promotion = 0), trả về đúng giá gốc.
+        Dùng Decimal xuyên suốt để tránh lệch số học với trường price (DecimalField).
+        """
+        if not self.has_promotion:
+            return self.price
+        from decimal import Decimal
+        discount_multiplier = Decimal('1') - (Decimal(self.promotion) / Decimal('100'))
+        return (self.price * discount_multiplier).quantize(Decimal('0.01'))
+
     def avaregereview(self):
         reviews = Comment.objects.filter(product=self, status='New').aggregate(avarage=Avg('rate'))
         avg = 0

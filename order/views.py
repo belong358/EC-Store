@@ -178,7 +178,7 @@ def addtoshopcart(request, id):
         totalqty = 0
         for rs in shopcart:
             if rs.product:
-                total += rs.product.price * rs.quantity
+                total += rs.product.final_price * rs.quantity
                 totalqty += rs.quantity
         cart_html = render_to_string('cart_dropdown_content.html', {
             'shopcart': shopcart, 'total': total, 'totalqty': totalqty,
@@ -202,7 +202,7 @@ def shopcart(request):
     total = 0
     for rs in shopcart:
         if rs.product:
-            total += rs.product.price * rs.quantity
+            total += rs.product.final_price * rs.quantity
     context = {'shopcart': shopcart, 'category': category, 'total': total, 'setting': setting}
     return render(request, 'shopcart_products.html', context)
 
@@ -226,7 +226,7 @@ def update_shopcart(request, id):
                 # Tính toán lại tổng tiền để trả về cho AJAX
                 current_user = request.user
                 all_items = ShopCart.objects.filter(user_id=current_user.id)
-                total = sum(item.product.price * item.quantity for item in all_items)
+                total = sum(item.product.final_price * item.quantity for item in all_items)
                 
                 return JsonResponse({
                     'status': 'success',
@@ -238,7 +238,7 @@ def update_shopcart(request, id):
                 shopcart_item.delete()
                 # Tính lại tổng sau khi xóa
                 all_items = ShopCart.objects.filter(user_id=request.user.id)
-                total = sum(item.product.price * item.quantity for item in all_items)
+                total = sum(item.product.final_price * item.quantity for item in all_items)
                 return JsonResponse({
                     'status': 'removed',
                     'total': total
@@ -273,7 +273,7 @@ def orderproduct(request):
         return HttpResponseRedirect("/shopcart")
     total = 0
     for rs in shopcart:
-        total += rs.product.price * rs.quantity
+        total += rs.product.final_price * rs.quantity
     
     if request.method == 'POST':
         form = OrderForm(request.POST)
@@ -283,6 +283,7 @@ def orderproduct(request):
             data = Order()
             data.first_name = form.cleaned_data['first_name']
             data.last_name = form.cleaned_data['last_name']
+            data.email = form.cleaned_data['email']
             data.address = form.cleaned_data['address']
             data.city = form.cleaned_data['city']
             data.phone = form.cleaned_data['phone']
@@ -301,7 +302,7 @@ def orderproduct(request):
                 detail.product_id = rs.product_id
                 detail.user_id = current_user.id
                 detail.quantity = rs.quantity
-                detail.price = rs.product.price
+                detail.price = rs.product.final_price
                 detail.amount = rs.amount
                 detail.save()
 
@@ -312,7 +313,7 @@ def orderproduct(request):
                         'price_data': {
                             'currency': 'vnd',
                             'product_data': {'name': rs.product.title},
-                            'unit_amount': int(rs.product.price),
+                            'unit_amount': int(rs.product.final_price),
                         },
                         'quantity': rs.quantity,
                     })
@@ -352,7 +353,12 @@ def orderproduct(request):
                 vnp.request_data['vnp_IpAddr'] = vnp_ip
                 
                 vnpay_payment_url = vnp.get_payment_url(settings.VNP_URL, settings.VNP_HASH_SECRET)
-                return HttpResponseRedirect(vnpay_payment_url)
+                return render(request, 'VNPay_Redirect.html', {
+                    'order': data,
+                    'category': category,
+                    'setting': setting,
+                    'vnpay_payment_url': vnpay_payment_url,
+                })
 
             elif payment_method == 'MoMo':
                 momo = MoMoPayment(
@@ -425,6 +431,48 @@ def vnpay_return(request):
         messages.error(request, "Sai chữ ký bảo mật VNPay.")
         return HttpResponseRedirect('/shopcart/')
 
+def confirm_order_paid(order):
+    """
+    Xử lý 1 đơn hàng vừa được xác nhận thanh toán/tiếp nhận thành công:
+    trừ tồn kho, gửi email kèm hóa đơn PDF, xóa giỏ hàng của khách.
+
+    Idempotent: chỉ thực thi nếu order.status hiện đang là 'Chờ xác nhận'
+    (trạng thái khởi tạo, chưa từng bị trừ kho — xem STOCK_DEDUCTED_STATUSES
+    trong order/models.py). Gọi lại hàm này nhiều lần trên cùng 1 đơn đã xử lý
+    rồi sẽ không trừ kho/gửi mail thêm lần nữa — quan trọng vì VNPay/MoMo có
+    thể trigger việc xác nhận từ cả luồng redirect (return URL) lẫn webhook (IPN)
+    gần như đồng thời.
+
+    Trả về True nếu vừa xử lý xong (lần đầu), False nếu đơn đã được xử lý từ trước.
+    """
+    if order.status != 'Chờ xác nhận':
+        return False
+
+    order.status = 'Chờ lấy hàng'
+    order.save()
+
+    order_products = OrderProduct.objects.filter(order_id=order.id)
+    for rs in order_products:
+        product = Product.objects.get(id=rs.product_id)
+        product.amount -= rs.quantity
+        product.save()
+
+    try:
+        pdf = generate_invoice_pdf(order, order_products)
+        if pdf:
+            subject = f'Hóa đơn EleStore - Đơn hàng #{order.code}'
+            message = f'Chào {order.first_name},\n\nCảm ơn bạn đã mua hàng tại EleStore. Đơn hàng #{order.code} của bạn đã được xác nhận thành công ({order.payment_method}).\n\nVui lòng xem chi tiết hóa đơn trong tệp đính kèm.'
+            email = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [order.user.email])
+            email.attach(f'Invoice_{order.code}.pdf', pdf, 'application/pdf')
+            email.send()
+    except Exception as mail_err:
+        print(f"Lỗi gửi mail: {mail_err}")
+
+    ShopCart.objects.filter(user_id=order.user_id).delete()
+
+    return True
+
+
 def payment_success(request):
     session_id = request.GET.get('session_id')
     order_id = request.GET.get('order_id')
@@ -440,42 +488,26 @@ def payment_success(request):
         except Exception as e:
             messages.error(request, f"Lỗi xác thực Stripe: {str(e)}")
             return HttpResponseRedirect('/')
-    elif order_id: # COD hoặc VNPay
+    elif order_id: # COD, VNPay hoặc MoMo
         order = Order.objects.get(id=order_id)
 
     if order:
         if order.status == 'Chờ xác nhận':
-            order.status = 'Chờ lấy hàng'
-            order.save()
-            order_products = OrderProduct.objects.filter(order_id=order.id)
-            for rs in order_products:
-                product = Product.objects.get(id=rs.product_id)
-                product.amount -= rs.quantity
-                product.save()
-            
-            # Gửi Mail
-            try:
-                pdf = generate_invoice_pdf(order, order_products)
-                if pdf:
-                    subject = f'Hóa đơn EleStore - Đơn hàng #{order.code}'
-                    message = f'Chào {order.first_name},\n\nCảm ơn bạn đã mua hàng tại EleStore. Đơn hàng #{order.code} của bạn đã được xác nhận thành công ({order.payment_method}).\n\nVui lòng xem chi tiết hóa đơn trong tệp đính kèm.'
-                    email = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [order.user.email])
-                    email.attach(f'Invoice_{order.code}.pdf', pdf, 'application/pdf')
-                    email.send()
-            except Exception as mail_err:
-                print(f"Lỗi gửi mail: {mail_err}")
+            confirm_order_paid(order)
 
-            ShopCart.objects.filter(user_id=order.user_id).delete()
             if 'cart_items' in request.session:
                 request.session['cart_items'] = 0
-            
+
             category = Category.objects.all()
             setting = Setting.objects.get(pk=1)
             msg = "Thanh toán thành công!" if order.payment_method != 'COD' else "Đặt hàng thành công!"
             messages.success(request, f"{msg} Hóa đơn đã được gửi vào email của bạn.")
             return render(request, 'Order_Completed.html', {'ordercode': order.code, 'category': category, 'setting': setting})
-        
-        elif order.status == 'Chờ lấy hàng':
+
+        elif order.status in ('Chờ lấy hàng', 'Chờ giao hàng', 'Đã giao hàng'):
+            # Đơn đã được xác nhận từ trước (ví dụ MoMo IPN xử lý nhanh hơn lượt
+            # redirect của người dùng) -> chỉ hiển thị lại trang hoàn tất, không
+            # trừ kho/gửi mail thêm lần nữa.
             category = Category.objects.all()
             setting = Setting.objects.get(pk=1)
             return render(request, 'Order_Completed.html', {'ordercode': order.code, 'category': category, 'setting': setting})
@@ -535,11 +567,9 @@ def momo_ipn(request):
             if result_code == 0:
                 try:
                     order = Order.objects.get(code=order_code)
-                    if order.status == 'Chờ xác nhận':
-                        # Xử lý tương tự payment_success nhưng không render giao diện
-                        order.status = 'Chờ lấy hàng'
-                        order.save()
-                        # ... có thể thêm logic trừ kho ở đây nếu cần đồng bộ cao
+                    # Dùng chung logic với payment_success: tự kiểm tra idempotent,
+                    # tự trừ kho + gửi hóa đơn nếu đây là lần xác nhận đầu tiên cho đơn này.
+                    confirm_order_paid(order)
                 except Order.DoesNotExist:
                     pass
             

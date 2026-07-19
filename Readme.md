@@ -84,8 +84,18 @@ Dự án với được xây dựng bằng Backend **Django (Python)** với **S
 
 ## Các tài khoản có thể đăng nhập vào web
 
-** tk: kimlong299 , mk: 123456
+** tk: kimlong299 , mk: 123456 (Quản trị viên)
+** tk: quocthai438 , mk: 12345678 (Nhân viên)
+** tk: tuancuong123 , mk: 12345678910 (Khách hàng)
+** tk: quocanh123 , mk: quocanh123 (Khách hàng)
+** tk: kimtruc456 , mk: kimtruc456 (Khách hàng)
 
+## Tài khoản NCB Test VNPay
+
+** Số thẻ: 9704198526191432198
+** Tên chủ thẻ: NGUYEN VAN A
+** Ngày phát hành: 07/15
+** Nhập OTP: 123456
 
 ## Cấu trúc dự án:
 

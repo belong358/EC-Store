@@ -9,6 +9,7 @@ from home.forms import SearchForm
 from django.utils import timezone
 from home.models import Setting, ContactForm, ContactMessage, Banner
 from product.models import Category, Product, Images, Comment
+from order.models import OrderProduct
 from django.db.models import Q
 from django.core.paginator import Paginator
 
@@ -199,10 +200,26 @@ def product_detail(request, id, slug):
     page_number = request.GET.get('page')
     comments = paginator.get_page(page_number)
 
+    # ── Kiểm tra quyền đánh giá: khách hàng phải mua sản phẩm này
+    # và đơn hàng tương ứng phải có trạng thái "Đã giao hàng" ──
+    can_review = False
+    already_reviewed = False
+    if request.user.is_authenticated:
+        can_review = OrderProduct.objects.filter(
+            user=request.user,
+            product_id=id,
+            order__status='Đã giao hàng'
+        ).exists()
+        already_reviewed = Comment.objects.filter(
+            user=request.user,
+            product_id=id
+        ).exists()
+
     context = {
         'product': product, 'category': category,
         'products_picked': products_picked,
         'images': images, 'comments': comments, 'setting': setting,
+        'can_review': can_review, 'already_reviewed': already_reviewed,
     }
 
     if product.variant != "None":

@@ -11,6 +11,11 @@ from django.conf import settings
 
 
 _client = genai.Client(api_key=settings.GEMINI_API_KEY)
+# Tên model AI — để trong settings/.env vì Google định kỳ khai tử các model cũ
+# (VD gemini-2.0-flash-lite đã bị shutdown hoàn toàn từ 01/06/2026). Khi Google
+# thông báo khai tử model đang dùng, chỉ cần đổi GEMINI_MODEL trong .env,
+# không cần sửa code.
+_GEMINI_MODEL = getattr(settings, "GEMINI_MODEL", "gemini-3.1-flash-lite")
 
 _chroma_client = chromadb.PersistentClient(path="./chroma_db")
 _default_ef = embedding_functions.DefaultEmbeddingFunction()
@@ -61,11 +66,12 @@ Quy tắc:
 """
 
     try:
-        resp = _client.models.generate_content(model="gemini-2.0-flash-lite", contents=prompt)
+        resp = _client.models.generate_content(model=_GEMINI_MODEL, contents=prompt)
         raw = resp.text.strip()
         raw = re.sub(r"```(?:json)?", "", raw).strip().strip("`")
         return json.loads(raw)
-    except Exception:
+    except Exception as e:
+        print(f"=== [CHATBOT] Lỗi extract_intent ({type(e).__name__}): {e} ===")
         return {
             "needs_product": False,
             "product_type": None,
@@ -187,8 +193,19 @@ Ngân sách: {budget_str}
 6. Trả lời bằng tiếng Việt.
 """
 
-    response = _client.models.generate_content(model="gemini-2.0-flash-lite", contents=prompt)
-    return response.text
+    try:
+        response = _client.models.generate_content(model=_GEMINI_MODEL, contents=prompt)
+        return response.text
+    except Exception as e:
+        print("=== [CHATBOT] Lỗi gọi Gemini API ===")
+        print(f"Model: {_GEMINI_MODEL}")
+        print(f"Loại lỗi: {type(e).__name__}")
+        print(f"Chi tiết: {e}")
+        print("=====================================")
+        return (
+            "Xin lỗi, hệ thống AI đang tạm thời gián đoạn (có thể do model AI đã thay đổi/hết hạn phía nhà cung cấp). "
+            "Bạn vui lòng thử lại sau ít phút, hoặc liên hệ trực tiếp qua mục Liên hệ để được hỗ trợ nhé!"
+        )
 
 
 @csrf_exempt

@@ -52,7 +52,7 @@
                                     <p class="small text-muted">Mã SP: #{{ rs.product.id }}</p>
                                 </td>
                                 <td class="price text-center">
-                                    <strong>{{ rs.product.price|floatformat:0|intcomma }} đ</strong>
+                                    {% if rs.product.has_promotion %}<span class="price-old" style="text-decoration:line-through;color:#999;font-size:12px;margin-right:4px;">{{ rs.product.price|floatformat:0|intcomma }} đ</span>{% endif %}<strong>{{ rs.product.final_price|floatformat:0|intcomma }} đ</strong>
                                 </td>
                                 <td class="qty text-center">
                                     <div class="custom-input-number" style="width: 100px;">

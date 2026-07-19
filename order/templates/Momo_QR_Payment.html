@@ -42,13 +42,14 @@
                         <p class="small text-muted">Vui lòng mở ứng dụng MoMo để quét mã QR trên.</p>
                     </div>
 
-                    <div class="alert alert-info" style="margin-top: 20px; text-align: left;">
-                        <h5>Hướng dẫn thanh toán Sandbox:</h5>
-                        <ol style="padding-left: 20px;">
-                            <li>Do đây là môi trường thử nghiệm, QR này chỉ dùng cho <strong>App MoMo Sandbox</strong>.</li>
-                            <li>Hoặc bạn có thể click nút bên dưới để vào trang thanh toán MoMo và dùng số test:</li>
-                            <li>SĐT: <code>0987654321</code> | OTP: <code>000000</code></li>
-                        </ol>
+                    <div class="alert" style="background:#fff7ed;border:2px solid #f59e0b;border-radius:10px;margin-top: 20px; text-align: left;padding:18px 20px;">
+                        <h5 style="color:#b45309;font-weight:800;margin-top:0"><i class="fa fa-triangle-exclamation"></i> Đây là môi trường THỬ NGHIỆM (Sandbox)</h5>
+                        <p style="margin-bottom:8px"><strong>Không thể quét mã này bằng app MoMo thật.</strong> QR chỉ dùng được với App MoMo Sandbox (app test riêng biệt do MoMo phát hành cho lập trình viên).</p>
+                        <p style="margin-bottom:0">Cách dễ nhất: bấm nút bên dưới để vào trang test MoMo, sau đó nhập:</p>
+                        <table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:6px">
+                            <tr><td style="padding:3px 0;color:#78716c">Số điện thoại</td><td style="padding:3px 0;font-weight:700">0987654321</td></tr>
+                            <tr><td style="padding:3px 0;color:#78716c">Mã OTP</td><td style="padding:3px 0;font-weight:700">000000</td></tr>
+                        </table>
                         <div class="text-center" style="margin-top: 15px;">
                             <a href="{{ payUrl }}" class="primary-btn btn-sm" target="_blank">Đến trang MoMo Test</a>
                         </div>

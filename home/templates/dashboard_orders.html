@@ -55,6 +55,10 @@
             <a href="/dashboard/orders/{{ o.id }}/" class="btn btn-ghost btn-sm btn-icon" title="Xem chi tiết">
               <i class="fa fa-eye"></i>
             </a>
+            <button type="button" class="btn btn-ghost btn-sm btn-icon" title="Xóa đơn hàng"
+              onclick="confirmDeleteOrder('{{ o.id }}', '{{ o.code|escapejs }}')">
+              <i class="fa fa-trash" style="color:var(--red)"></i>
+            </button>
           </td>
         </tr>
         {% endfor %}
@@ -90,4 +94,36 @@
     </div>
   </div>
 </div>
+
+<!-- ── MODAL XÁC NHẬN XÓA 1 ĐƠN ── -->
+<div id="deleteOrderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:var(--radius);padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">
+    <div style="width:56px;height:56px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fa fa-triangle-exclamation" style="font-size:24px;color:var(--red)"></i>
+    </div>
+    <h3 style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:8px">Xóa đơn hàng <span id="delOrderCode"></span>?</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">
+      Hành động này sẽ xóa toàn bộ chi tiết đơn hàng này.<br>
+      <strong style="color:var(--red)">Không thể hoàn tác!</strong>
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-ghost" onclick="document.getElementById('deleteOrderModal').style.display='none'">
+        Hủy bỏ
+      </button>
+      <form method="post" id="deleteOrderForm" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+          <i class="fa fa-trash"></i> Xác nhận xóa
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+function confirmDeleteOrder(id, code) {
+  document.getElementById('delOrderCode').textContent = '#' + code;
+  document.getElementById('deleteOrderForm').action = '/dashboard/orders/' + id + '/delete/';
+  document.getElementById('deleteOrderModal').style.display = 'flex';
+}
+</script>
 {% endblock %}

@@ -8,7 +8,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
 
 # Create your views here.
-from order.models import Order, OrderProduct
+from order.models import Order, OrderProduct, restock_order
 from product.models import Category, Comment
 from user.forms import SignUpForm, UserUpdateForm, ProfileUpdateForm
 from user.models import UserProfile
@@ -236,6 +236,7 @@ def cancel_order(request, id):
 
     if request.method == 'POST':
         if order.status in ['Chờ xác nhận', 'Chờ lấy hàng']:
+            restock_order(order, order.status)
             order.status = 'Đã hủy'
             order.save()
             messages.success(request, f'Đơn hàng #{order.code} đã được hủy thành công.')
@@ -253,6 +254,7 @@ def return_order(request, id):
 
     if request.method == 'POST':
         if order.status == 'Đã giao hàng':
+            restock_order(order, order.status)
             order.status = 'Trả hàng'
             order.save()
             messages.success(request, f'Yêu cầu trả hàng cho đơn #{order.code} đã được ghi nhận.')

@@ -103,21 +103,17 @@
   <div class="card">
     <div class="card-header">
       <div class="card-title">Đơn hàng gần đây</div>
-      <a href="/dashboard/orders/" class="btn btn-ghost btn-sm">Xem tất cả</a>
     </div>
     {% if recent_orders %}
     <div style="overflow-x:auto">
       <table>
-        <thead><tr><th>Mã</th><th>Khách hàng</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead>
+        <thead><tr><th>Mã</th><th>Tên hàng</th></tr></thead>
         <tbody>
           {% for o in recent_orders %}
           <tr>
             <td><a href="/dashboard/orders/{{ o.id }}/" style="color:var(--red);font-weight:700">#{{ o.code }}</a></td>
-            <td>{{ o.first_name }} {{ o.last_name }}</td>
-            <td style="font-weight:700;color:var(--red)">{{ o.total|floatformat:0|intcomma }}</td>
-            <td style="color:var(--muted);font-size:12px">{{ o.payment_method }}</td>
             <td>
-              <span class="pill {% if o.status == 'Đã giao hàng' %}pill-done{% elif o.status == 'Đã hủy' %}pill-cancel{% elif o.status == 'Trả hàng' %}pill-return{% elif o.status == 'Chờ xác nhận' %}pill-new{% elif o.status == 'Chờ lấy hàng' %}pill-accept{% elif o.status == 'Chờ giao hàng' %}pill-ship{% else %}pill-accept{% endif %}">{{ o.status }}</span>
+              {% for op in o.orderproduct_set.all %}{{ op.product.title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
             </td>
           </tr>
           {% endfor %}
@@ -187,7 +183,85 @@
 {% block extra_js %}
 <script>
 const L={{ chart_labels|safe }}, D={{ chart_data|safe }}, SL={{ status_labels|safe }}, SD={{ status_data|safe }};
-new Chart(document.getElementById('rev'),{type:'bar',data:{labels:L,datasets:[{label:'Doanh thu',data:D,backgroundColor:'rgba(209,0,36,.15)',borderColor:'#d10024',borderWidth:2,borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{family:'Be Vietnam Pro',size:11}}},y:{grid:{color:'#f0f0f0'},ticks:{font:{family:'Be Vietnam Pro',size:10},callback:v=>v>=1e9?(v/1e9).toFixed(1)+'T':v>=1e6?(v/1e6).toFixed(0)+'M':v}}}}});
+
+// Bảng màu luân phiên theo từng cột (giống mẫu báo cáo nhiều màu)
+const REV_COLORS = ['#4f8ef7','#f7b84f','#4fd18f','#f76f6f','#a17bf7','#f7d24f','#4fc7f7','#f78f4f'];
+function fmtVND(v){
+  if (v>=1e9) return (v/1e9).toFixed(2).replace(/\.00$/,'') + ' tỷ';
+  if (v>=1e6) return (v/1e6).toFixed(1).replace(/\.0$/,'') + ' tr';
+  return v.toLocaleString('vi-VN');
+}
+
+// Plugin tự vẽ giá trị doanh thu ngay trên đầu mỗi cột
+const valueLabelPlugin = {
+  id: 'valueLabel',
+  afterDatasetsDraw(chart){
+    const {ctx, data} = chart;
+    const meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = "600 11px 'Be Vietnam Pro'";
+    ctx.textAlign = 'center';
+    meta.data.forEach((bar, i) => {
+      const val = data.datasets[0].data[i];
+      if (!val) return;
+      ctx.fillStyle = REV_COLORS[i % REV_COLORS.length];
+      ctx.fillText(fmtVND(val), bar.x, bar.y - 8);
+    });
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('rev'), {
+  type: 'bar',
+  data: {
+    labels: L,
+    datasets: [{
+      label: 'Doanh thu',
+      data: D,
+      backgroundColor: L.map((_, i) => REV_COLORS[i % REV_COLORS.length]),
+      borderRadius: 6,
+      borderSkipped: false,
+      maxBarThickness: 56,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 24 } },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: {
+          font: { family: 'Be Vietnam Pro', size: 11 },
+          usePointStyle: true,
+          boxWidth: 10,
+          generateLabels: () => L.map((label, i) => ({
+            text: label,
+            fillStyle: REV_COLORS[i % REV_COLORS.length],
+            strokeStyle: REV_COLORS[i % REV_COLORS.length],
+            pointStyle: 'circle',
+          })),
+        }
+      },
+      tooltip: {
+        callbacks: { label: ctx => 'Doanh thu: ' + Number(ctx.raw).toLocaleString('vi-VN') + ' VND' }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { family: 'Be Vietnam Pro', size: 11 } } },
+      y: {
+        grid: { color: '#f0f0f0' },
+        ticks: {
+          font: { family: 'Be Vietnam Pro', size: 10 },
+          callback: v => v >= 1e9 ? (v/1e9).toFixed(1)+'T' : v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v
+        }
+      }
+    }
+  },
+  plugins: [valueLabelPlugin]
+});
+
 const SC={'Chờ xác nhận':'#f97316','Chờ lấy hàng':'#3b82f6','Chờ giao hàng':'#eab308','Đã giao hàng':'#22c55e','Trả hàng':'#8b5cf6','Đã hủy':'#ef4444'};
 new Chart(document.getElementById('sts'),{type:'doughnut',data:{labels:SL,datasets:[{data:SD,backgroundColor:SL.map(l=>SC[l]||'#8b5cf6'),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{family:'Be Vietnam Pro',size:11},padding:12,boxWidth:11,usePointStyle:true}}}}});
 </script>

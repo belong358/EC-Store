@@ -1,0 +1,95 @@
+{% extends 'homebase.html' %}
+{% load humanize %}
+
+{% block title %} Thanh toán VNPay {% endblock %}
+
+{% block body %}
+<div id="breadcrumb">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li><a href="/">Trang chủ</a></li>
+            <li class="active">Thanh toán VNPay</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <div class="section-title">
+                    <h3 class="title">Thanh toán qua VNPay</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-7 col-md-offset-1">
+                <div class="billing-details text-center" style="border: 1px solid #E4E7ED; padding: 30px; border-radius: 10px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <h4 style="color: #D10024;">Tổng thanh toán: {{ order.total|floatformat:0|intcomma }} VND</h4>
+                    <p class="text-muted">Đơn hàng: #{{ order.code }}</p>
+
+                    <hr>
+
+                    <div class="alert" style="background:#fff7ed;border:2px solid #f59e0b;border-radius:10px;text-align:left;padding:18px 20px;">
+                        <h5 style="color:#b45309;font-weight:800;margin-top:0">
+                            <i class="fa fa-triangle-exclamation"></i> Đây là môi trường THỬ NGHIỆM (Sandbox)
+                        </h5>
+                        <p style="margin-bottom:10px">
+                            Bạn sẽ được chuyển đến trang thanh toán <strong>Sandbox VNPay</strong> — không phải VNPay thật, nên
+                            <strong>không thể quét mã bằng app ngân hàng thật</strong>. Hãy nhập thông tin thẻ test bên dưới
+                            ngay trên trang VNPay để mô phỏng giao dịch thành công.
+                        </p>
+                        <table style="width:100%;font-size:13px;border-collapse:collapse">
+                            <tr><td style="padding:3px 0;color:#78716c">Ngân hàng</td><td style="padding:3px 0;font-weight:700">NCB</td></tr>
+                            <tr><td style="padding:3px 0;color:#78716c">Số thẻ</td><td style="padding:3px 0;font-weight:700">9704198526191432198</td></tr>
+                            <tr><td style="padding:3px 0;color:#78716c">Tên chủ thẻ</td><td style="padding:3px 0;font-weight:700">NGUYEN VAN A</td></tr>
+                            <tr><td style="padding:3px 0;color:#78716c">Ngày phát hành</td><td style="padding:3px 0;font-weight:700">07/15</td></tr>
+                            <tr><td style="padding:3px 0;color:#78716c">Mật khẩu OTP</td><td style="padding:3px 0;font-weight:700">123456</td></tr>
+                        </table>
+                        <p style="margin:10px 0 0;font-size:12px;color:#78716c">
+                            (Bộ thẻ test chính thức từ VNPay — chỉ dùng được trên môi trường sandbox, không phải thẻ thật)
+                        </p>
+                    </div>
+
+                    <div style="margin-top:22px">
+                        <a href="{{ vnpay_payment_url }}" class="primary-btn" id="vnpayContinueBtn">
+                            Tiếp tục đến VNPay <i class="fa fa-arrow-right"></i>
+                        </a>
+                        <p class="small text-muted" style="margin-top:10px">Tự động chuyển sau <span id="countdown">8</span> giây...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  let seconds = 8;
+  const countdownEl = document.getElementById('countdown');
+  const timer = setInterval(() => {
+    seconds -= 1;
+    if (countdownEl) countdownEl.textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      window.location.href = document.getElementById('vnpayContinueBtn').href;
+    }
+  }, 1000);
+</script>
+
+<style>
+    .primary-btn {
+        background-color: #D10024;
+        color: #FFF;
+        padding: 10px 22px;
+        border-radius: 40px;
+        text-transform: uppercase;
+        font-weight: 700;
+        display: inline-block;
+    }
+    .primary-btn:hover {
+        background-color: #a5001c;
+        color: #FFF;
+    }
+</style>
+{% endblock %}

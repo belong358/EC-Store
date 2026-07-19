@@ -20,7 +20,7 @@ def cart_info(request):
     totalqty = 0
     for rs in shopcart:
         if rs.product:
-            total += rs.product.price * rs.quantity
+            total += rs.product.final_price * rs.quantity
             totalqty += rs.quantity
 
     return {
