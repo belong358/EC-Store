@@ -67,9 +67,70 @@
 		<!-- jQuery Plugins -->
 		{% load static %}
 		<script src="{% static '' %}js/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+		<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 		<script src="{% static '' %}js/bootstrap.min.js"></script>
 		<script src="{% static '' %}js/slick.min.js"></script>
 		<script src="{% static '' %}js/nouislider.min.js"></script>
 		<script src="{% static '' %}js/jquery.zoom.min.js"></script>
 		<script src="{% static '' %}js/main.js"></script>
 		<script src="{% static '' %}js/cart-ajax.js"></script>
+		<script>
+			$(function() {
+				var $searchBox = $("#query").autocomplete({
+					source: "/search_auto/",
+					minLength: 2,
+					select: function (event, ui) {
+						window.location.href = ui.item.url;
+						return false;
+					}
+				});
+			
+				$searchBox.autocomplete("instance")._renderItem = function(ul, item) {
+					return $("<li>")
+						.append(
+							'<div class="ac-item">' +
+								'<img src="' + item.image + '" class="ac-thumb">' +
+								'<div class="ac-info">' +
+									'<div class="ac-title">' + item.label + '</div>' +
+									'<div class="ac-price">' + item.price + ' VND</div>' +
+								'</div>' +
+							'</div>'
+						)
+						.appendTo(ul);
+				};
+			});
+		</script>
+		<style>
+			.ui-autocomplete {
+				max-height: 400px;
+				overflow-y: auto;
+				overflow-x: hidden;
+				width: 400px !important;
+				z-index: 9999;
+			}
+			.ac-item {
+				display: flex;
+				align-items: center;
+				padding: 6px 4px;
+			}
+			.ac-thumb {
+				width: 45px;
+				height: 45px;
+				object-fit: cover;
+				margin-right: 10px;
+				border-radius: 4px;
+			}
+			.ac-info {
+				flex: 1;
+			}
+			.ac-title {
+				font-size: 13px;
+				color: #333;
+			}
+			.ac-price {
+				font-size: 13px;
+				color: #D10024;
+				font-weight: 700;
+			}
+			</style>

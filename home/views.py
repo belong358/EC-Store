@@ -12,6 +12,7 @@ from product.models import Category, Product, Images, Comment
 from order.models import OrderProduct
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.urls import reverse
 
 import random
 
@@ -168,7 +169,7 @@ def category_products(request, id, slug):
 
 
 def search(request):
-    products_mo = Product.objects.all().order_by('?')[:3]
+    products_mo = get_random_products(Product.objects.all(), 3)
     setting = Setting.objects.get(pk=1)
 
     if request.method == 'POST':
@@ -189,8 +190,16 @@ def search(request):
 def search_auto(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         q = request.GET.get('term', '')
-        products = Product.objects.filter(title__icontains=q)
-        results = [rs.title for rs in products]
+        products = Product.objects.filter(title__icontains=q)[:10]
+        results = []
+        for p in products:
+            results.append({
+                'label': p.title,
+                'value': p.title,
+                'price': '{:,.0f}'.format(p.final_price),
+                'image': p.image.url if p.image else '',
+                'url': reverse('product_detail', args=[p.id, p.slug]),
+            })
         data = json.dumps(results)
     else:
         data = json.dumps([])
@@ -204,7 +213,7 @@ def product_detail(request, id, slug):
 
     product = get_object_or_404(Product, pk=id)
 
-    products_picked = Product.objects.all().order_by('?')[:4]
+    products_picked = get_random_products(Product.objects.all(), 4)
     images = Images.objects.filter(product_id=id)
 
     all_comments = Comment.objects.filter(product_id=id, status="New").order_by('-create_at')
