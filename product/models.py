@@ -29,7 +29,6 @@ class Category(MPTTModel):
 
     # duong link slug để tạo đường dẫn thân thiện cho người dùng
     slug = models.SlugField(null=False, unique=True)
-    slug = models.SlugField(null=False, unique=True)
     
     # Thời gian
     create_at=models.DateTimeField(auto_now_add=True)

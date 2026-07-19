@@ -13,7 +13,13 @@ from order.models import OrderProduct
 from django.db.models import Q
 from django.core.paginator import Paginator
 
+import random
 
+def get_random_products(queryset, n):
+    """Lấy ngẫu nhiên n sản phẩm từ queryset, nhanh hơn order_by('?')."""
+    ids = list(queryset.values_list('id', flat=True))
+    random_ids = random.sample(ids, min(n, len(ids)))
+    return Product.objects.filter(id__in=random_ids)
 # Phần lấy data trong database và hiển thị ra trang chủ
 def index(request):
     category = Category.objects.all()
@@ -31,16 +37,22 @@ def index(request):
     products_slider = Product.objects.all().order_by('-id')[:3]
 
     # Lấy các sản phẩm theo category_slug
-    products_latest = Product.objects.filter(Q(category__slug='laptop-asus') | Q(category__slug='laptop-lenovo')|Q(category__slug='laptop-acer') ).order_by('?')[:6]
-    pk_latest = Product.objects.filter(
-        Q(category__slug='chut') | Q(category__slug='ban-phim') | Q(category__slug='tai-nghe')).order_by(
-        '?')[:6]
-    lk_latest = Product.objects.filter(
-        Q(category__slug='cpu') | Q(category__slug='mainboard') | Q(category__slug='psu') |Q(category__slug='vga')
-    |Q(category__slug='ram') | Q(category__slug='cng')).order_by(
-        '?')[:6]
-
-    products_picked = Product.objects.all().order_by('?')[:5]
+    products_latest = get_random_products(
+        Product.objects.filter(Q(category__slug='laptop-asus') | Q(category__slug='laptop-lenovo') | Q(category__slug='laptop-acer')),
+        6
+    )
+    pk_latest = get_random_products(
+        Product.objects.filter(Q(category__slug='chut') | Q(category__slug='ban-phim') | Q(category__slug='tai-nghe')),
+        6
+    )
+    lk_latest = get_random_products(
+        Product.objects.filter(
+            Q(category__slug='cpu') | Q(category__slug='mainboard') | Q(category__slug='psu') |
+            Q(category__slug='vga') | Q(category__slug='ram') | Q(category__slug='cng')
+        ),
+        6
+    )
+    products_picked = get_random_products(Product.objects.all(), 5)
     products_chunks = [products_latest[i:i + 3] for i in range(0, len(products_latest), 3)]
     pk_chunks = [pk_latest[i:i + 3] for i in range(0, len(pk_latest ), 3)]
     lk_chunks = [lk_latest[i:i + 3] for i in range(0, len(lk_latest), 3)]

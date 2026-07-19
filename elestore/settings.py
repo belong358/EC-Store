@@ -197,7 +197,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'EleStore <{EMAIL_HOST_USER}>')
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 SOCIALACCOUNT_LOGIN_ON_GET = True   # bỏ trang xác nhận "Sign In Via Google"
 SOCIALACCOUNT_AUTO_SIGNUP = True    # tự tạo tài khoản, không hỏi lại
 
@@ -278,8 +278,8 @@ VNP_RETURN_URL = os.getenv('VNP_RETURN_URL', 'http://127.0.0.1:8000/order/vnpay_
 
 # MoMo Configuration
 MOMO_PARTNER_CODE = os.getenv('MOMO_PARTNER_CODE', 'MOMO')
-MOMO_ACCESS_KEY = os.getenv('MOMO_ACCESS_KEY', 'F8BBA842ECF85')
-MOMO_SECRET_KEY = os.getenv('MOMO_SECRET_KEY', 'K951B6PE1waDMi640xX08PD3vg6EkVlz')
+MOMO_ACCESS_KEY = os.getenv('MOMO_ACCESS_KEY', '')
+MOMO_SECRET_KEY = os.getenv('MOMO_SECRET_KEY', '')
 MOMO_ENDPOINT = os.getenv('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create')
 MOMO_RETURN_URL = os.getenv('MOMO_RETURN_URL', 'http://127.0.0.1:8000/order/momo_return/')
 MOMO_IPN_URL = os.getenv('MOMO_IPN_URL', 'http://127.0.0.1:8000/order/momo_ipn/')
