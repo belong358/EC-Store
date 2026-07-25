@@ -37,3 +37,18 @@ def site_settings(request):
     quên truyền 'setting' vào context (như từng xảy ra ở trang /shopcart/).
     """
     return {'setting': Setting.objects.filter(pk=1).first()}
+
+
+def wishlist_count(request):
+    """
+    Context processor: cung cấp 'wishlist_count' (số sản phẩm yêu thích)
+    cho header ở TẤT CẢ template, tương tự cart_info ở trên. Chỉ tính cho
+    người dùng đã đăng nhập (Wishlist gắn với user, không dùng session như
+    compare_list) — khách chưa đăng nhập sẽ luôn thấy số 0.
+    """
+    if request.user.is_authenticated:
+        from product.models import Wishlist
+        count = Wishlist.objects.filter(user=request.user).count()
+    else:
+        count = 0
+    return {'wishlist_count': count}

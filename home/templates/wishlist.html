@@ -1,0 +1,133 @@
+{% extends 'homebase.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %} Sản phẩm yêu thích - {{ setting.title }} {% endblock %}
+
+{% block body %}
+<div id="breadcrumb" class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="breadcrumb-tree">
+          <li><a href="/">Trang chủ</a></li>
+          <li class="active">Sản phẩm yêu thích</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="section-title text-center">
+          <h3 class="title"><i class="fa fa-heart" style="color:#D10024"></i> Sản phẩm yêu thích</h3>
+          <p class="text-muted">
+            {% if wishlist_items %}
+              Bạn có {{ wishlist_items|length }} sản phẩm trong danh sách yêu thích
+            {% else %}
+              Lưu lại những sản phẩm bạn quan tâm để xem lại sau
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {% if wishlist_items %}
+    <div class="row">
+      {% for item in wishlist_items %}
+      <div class="col-md-4 col-sm-6 col-xs-6">
+        <!-- product -->
+        <div class="product">
+          <a href="/product/{{ item.product.id }}/{{ item.product.slug }}">
+            <div class="product-img">
+              <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
+              <div class="product-label">
+                <span class="new">NEW</span>
+                {% if item.product.has_promotion %}<span class="sale">-{{ item.product.promotion }}%</span>{% endif %}
+              </div>
+            </div>
+          </a>
+          <div class="product-body">
+            <p class="product-category">{{ item.product.category }}</p>
+            <h3 class="product-name"><a href="/product/{{ item.product.id }}/{{ item.product.slug }}">{{ item.product.title }}</a></h3>
+            {% if item.product.has_promotion %}<span class="price-old">{{ item.product.price|floatformat:0|intcomma }}</span>{% endif %}
+            <h4 class="product-price">{{ item.product.final_price|floatformat:0|intcomma }}</h4>
+            <div class="product-rating">
+              <i class="fa fa-star{% if item.product.avaregereview < 1 %}-o empty{% endif %}" style="color:#DC143C"></i>
+              <i class="fa fa-star{% if item.product.avaregereview < 2 %}-o empty{% endif %}" style="color:#DC143C"></i>
+              <i class="fa fa-star{% if item.product.avaregereview < 3 %}-o empty{% endif %}" style="color:#DC143C"></i>
+              <i class="fa fa-star{% if item.product.avaregereview < 4 %}-o empty{% endif %}" style="color:#DC143C"></i>
+              <i class="fa fa-star{% if item.product.avaregereview < 5 %}-o empty{% endif %}" style="color:#DC143C"></i>
+            </div>
+            <div class="product-btns">
+              <button class="remove-from-wishlist" data-id="{{ item.product.id }}" title="Xóa khỏi yêu thích">
+                <i class="fa fa-trash"></i><span class="tooltipp">Xóa khỏi yêu thích</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- /product -->
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+      <div class="col-md-12 text-center" style="padding:60px 0;">
+        <i class="fa fa-heart-o" style="font-size:64px;color:#ddd;"></i>
+        <p style="margin-top:16px;color:#999;font-size:15px;">Danh sách yêu thích của bạn đang trống.</p>
+        <a href="/" class="primary-btn" style="display:inline-block;margin-top:12px;">Tiếp tục mua sắm</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Xóa khỏi wishlist ngay tại trang này — xóa xong thì ẩn luôn card đó
+  // (không cần load lại trang), khớp UX với cách "So sánh" xử lý ở navbar.
+  document.body.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.remove-from-wishlist');
+    if (!btn) return;
+    e.preventDefault();
+    const id = btn.getAttribute('data-id');
+    const card = btn.closest('.col-md-4');
+
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`/product/wishlist/remove/${id}/`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        const headerWishlistCount = document.getElementById('wishlist-count-header');
+        if (headerWishlistCount) {
+          headerWishlistCount.textContent = data.count > 0 ? `(${data.count})` : '';
+        }
+        if (card) {
+          card.style.transition = 'opacity .25s';
+          card.style.opacity = '0';
+          setTimeout(() => {
+            card.remove();
+            // Nếu xóa hết sản phẩm cuối cùng, tải lại trang để hiện khối "trống"
+            if (document.querySelectorAll('.remove-from-wishlist').length === 0) {
+              window.location.reload();
+            }
+          }, 250);
+        }
+      }
+    } catch (error) {
+      console.error('Lỗi xóa yêu thích:', error);
+      btn.innerHTML = originalIcon;
+      btn.disabled = false;
+    }
+  });
+});
+</script>
+{% endblock %}

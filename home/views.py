@@ -213,7 +213,24 @@ def product_detail(request, id, slug):
 
     product = get_object_or_404(Product, pk=id)
 
-    products_picked = get_random_products(Product.objects.all(), 4)
+    # ── Sản phẩm liên quan: ưu tiên sản phẩm CÙNG DANH MỤC (trừ chính nó) ──
+    # Trước đây carousel "Sản Phẩm Khác" lấy hoàn toàn ngẫu nhiên từ TOÀN BỘ
+    # sản phẩm, nên có thể hiện bàn phím ngay dưới trang chi tiết 1 laptop —
+    # không thực sự "liên quan". Nếu danh mục hiện tại không đủ 4 sản phẩm
+    # khác (danh mục nhỏ), bổ sung thêm sản phẩm ngẫu nhiên từ nơi khác để
+    # carousel không bị trống/thưa.
+    related_products = list(
+        Product.objects.filter(category=product.category)
+        .exclude(id=product.id)[:4]
+    )
+    if len(related_products) < 4:
+        exclude_ids = [product.id] + [p.id for p in related_products]
+        extra = get_random_products(
+            Product.objects.exclude(id__in=exclude_ids),
+            4 - len(related_products)
+        )
+        related_products += list(extra)
+
     images = Images.objects.filter(product_id=id)
 
     all_comments = Comment.objects.filter(product_id=id, status="New").order_by('-create_at')
@@ -238,7 +255,7 @@ def product_detail(request, id, slug):
 
     context = {
         'product': product, 'category': category,
-        'products_picked': products_picked,
+        'related_products': related_products,
         'images': images, 'comments': comments, 'setting': setting,
         'can_review': can_review, 'already_reviewed': already_reviewed,
     }

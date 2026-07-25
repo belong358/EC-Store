@@ -90,6 +90,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'home.context_processors.cart_info',
                 'home.context_processors.site_settings',
+                'home.context_processors.wishlist_count',
             ],
         },
     },
