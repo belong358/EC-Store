@@ -170,6 +170,12 @@
               </label>
               <div class="caption">
                 <p style="font-size: 13px; color: #666;">Thanh toán qua thẻ Visa, Mastercard, JCB (Cổng Stripe).</p>
+                <div id="stripe-test-card-info" style="display:none; margin-top:10px; padding:12px 15px; background:#FFF6F6; border:1px dashed #F3B9C0; border-radius:6px; font-size:13px; color:#555;">
+                  <strong style="color:#D10024;">Chế độ thử nghiệm (Test mode)</strong> — bạn sẽ được chuyển sang trang thanh toán của Stripe, dùng thông tin thẻ mẫu sau để hoàn tất giao dịch thử:<br>
+                  Số thẻ: <strong>4242 4242 4242 4242</strong> &nbsp;|&nbsp;
+                  Ngày hết hạn: <strong>bất kỳ ngày nào trong tương lai</strong> (VD: 12/30) &nbsp;|&nbsp;
+                  CVC: <strong>bất kỳ 3 số</strong> (VD: 123)
+                </div>
               </div>
             </div>
 
@@ -198,5 +204,75 @@
     .btn-block { width: 100%; display: block; }
     .primary-btn:hover { opacity: 0.9; }
 </style>
+
+<script>
+  (function () {
+    var stripeRadio = document.getElementById('payments-2');
+    var stripeInfo = document.getElementById('stripe-test-card-info');
+    var allPaymentRadios = document.querySelectorAll('input[name="payment_method"]');
+    var checkoutForm = document.getElementById('checkout-form');
+
+    function toggleStripeInfo() {
+      stripeInfo.style.display = stripeRadio.checked ? 'block' : 'none';
+    }
+
+    allPaymentRadios.forEach(function (radio) {
+      radio.addEventListener('change', toggleStripeInfo);
+    });
+
+    toggleStripeInfo();
+
+    // Khi chọn Stripe và bấm xác nhận đặt hàng: mở thêm 1 tab riêng
+    // chứa thông tin thẻ test, để xem lại trong lúc nhập trên trang Stripe.
+    checkoutForm.addEventListener('submit', function () {
+      if (stripeRadio.checked) {
+        var testTab = window.open('', '_blank');
+        if (testTab) {
+          testTab.document.write(`
+            <html>
+              <head>
+                <title>Thông tin thẻ test - Stripe</title>
+                <meta charset="utf-8">
+                <style>
+                  body { font-family: Arial, sans-serif; background:#F3F4F6; padding:40px; }
+                  .card { max-width:420px; margin:0 auto; background:#fff; border-radius:10px;
+                          box-shadow:0 4px 20px rgba(0,0,0,0.08); padding:26px 30px; }
+                  h2 { color:#D10024; font-size:18px; margin-bottom:18px; }
+                  .row { display:flex; justify-content:space-between; align-items:center;
+                         padding:10px 0; border-top:1px solid #F1F1F1; }
+                  .row:first-of-type { border-top:none; }
+                  .label { color:#6B7280; font-size:14px; }
+                  .value { font-weight:700; color:#30323A; font-size:15px; cursor:pointer;
+                           background:#FFF6F6; padding:4px 10px; border-radius:6px;
+                           border:1px dashed #F3B9C0; }
+                  .hint { font-size:12.5px; color:#9CA3AF; margin-top:14px; }
+                </style>
+              </head>
+              <body>
+                <div class="card">
+                  <h2>🔒 Thông tin thẻ test (Stripe)</h2>
+                  <div class="row">
+                    <span class="label">Số thẻ</span>
+                    <span class="value" onclick="navigator.clipboard.writeText('4242424242424242'); this.innerText='Đã sao chép!'">4242 4242 4242 4242</span>
+                  </div>
+                  <div class="row">
+                    <span class="label">Ngày hết hạn</span>
+                    <span class="value">Bất kỳ ngày nào ở tương lai (VD: 12/30)</span>
+                  </div>
+                  <div class="row">
+                    <span class="label">CVC</span>
+                    <span class="value">Bất kỳ 3 số (VD: 123)</span>
+                  </div>
+                  <div class="hint">Giữ tab này mở, quay lại tab thanh toán Stripe để dán/nhập thông tin. Đây là môi trường thử nghiệm, không phát sinh giao dịch thật.</div>
+                </div>
+              </body>
+            </html>
+          `);
+          testTab.document.close();
+        }
+      }
+    });
+  })();
+</script>
 
 {% endblock %}

@@ -319,15 +319,16 @@ def orderproduct(request):
                     })
                 try:
                     checkout_session = stripe.checkout.Session.create(
-                        ui_mode='embedded_page',
+                        ui_mode='hosted_page',
                         line_items=line_items,
                         mode='payment',
-                        return_url=request.build_absolute_uri(reverse('payment_success')) + "?session_id={CHECKOUT_SESSION_ID}",
+                        success_url=request.build_absolute_uri(reverse('payment_success')) + "?session_id={CHECKOUT_SESSION_ID}",
+                        cancel_url=request.build_absolute_uri(reverse('payment_cancel')),
                         metadata={'order_id': data.id, 'order_code': ordercode}
                     )
                     data.stripe_payment_id = checkout_session.id
                     data.save()
-                    return render(request, 'Order_Payment.html', {'order': data, 'category': category, 'setting': setting})
+                    return HttpResponseRedirect(checkout_session.url)
                 except Exception as e:
                     messages.error(request, str(e))
                     return HttpResponseRedirect("/order/orderproduct")

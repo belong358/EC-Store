@@ -1,3 +1,4 @@
+from django.core.cache import cache
 import json
 import re
 import chromadb
@@ -209,14 +210,40 @@ Ngân sách: {budget_str}
 
 
 @csrf_exempt
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+RATE_LIMIT_MAX = 15        # số tin nhắn tối đa
+RATE_LIMIT_WINDOW = 300    # trong 300 giây (5 phút)
+
 def chatbot_api(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request"}, status=400)
+
+    # ---- Rate limit theo IP ----
+    ip = get_client_ip(request)
+    cache_key = f"chatbot_rate_{ip}"
+    request_count = cache.get(cache_key, 0)
+
+    if request_count >= RATE_LIMIT_MAX:
+        return JsonResponse(
+            {"error": "Bạn đã gửi quá nhiều tin nhắn. Vui lòng thử lại sau ít phút."},
+            status=429
+        )
+    cache.set(cache_key, request_count + 1, timeout=RATE_LIMIT_WINDOW)
 
     try:
         data = json.loads(request.body)
         user_message = (data.get("message") or "").strip()
         history: list[dict] = data.get("history", [])
+
+        # ---- Giới hạn độ dài để tránh payload khổng lồ đẩy chi phí token ----
+        if len(user_message) > 500:
+            return JsonResponse({"error": "Tin nhắn quá dài, vui lòng rút gọn."}, status=400)
+        history = history[-6:]  # chỉ giữ 6 lượt gần nhất
 
         if not user_message:
             return JsonResponse({"error": "Message is empty"}, status=400)
