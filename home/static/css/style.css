@@ -1001,10 +1001,10 @@ textarea.input {
 .product {
   position: relative;
   margin: 8px 0px;
-  background-color: #FFF; /* Card trong .row bi ep cao bang nhau (xem .row:has(...) o tren)
-  nen card ngan hon bi keo gian them; neu .product khong co nen rieng, phan bi
-  gian do trong suot va lo nen xam cua trang ngay duoi 2 icon So sanh/Xem
-  nhanh, phia tren thanh "Them vao gio". Them nen trang de luon dong nhat. */
+  background-color: #FFF; /* Card .row ép cao bằng nhau (xem .row:has(...) ở trên) nên
+  card ngắn hơn bị kéo giãn thêm; nếu .product không có nền riêng, phần bị
+  giãn đó trong suốt và lộ nền xám của trang ngay dưới 2 icon So sánh/Xem
+  nhanh, phía trên thanh "Thêm vào giỏ". Thêm nền trắng để luôn đồng nhất. */
   -webkit-box-shadow: 0px 0px 0px 0px #E4E7ED, 0px 0px 0px 1px #E4E7ED;
   box-shadow: 0px 0px 0px 0px #E4E7ED, 0px 0px 0px 1px #E4E7ED;
   -webkit-transition: 0.2s all;
@@ -1156,6 +1156,12 @@ textarea.input {
   background-color: #E4E7ED;
 }
 
+.product .product-body .product-btns {
+  white-space: nowrap; /* Chặn 2 nút (So sánh/Yêu thích) bị vỡ xuống dòng khi
+  container hẹp — vỡ dòng khiến tooltip 1 nút hiện phía trên nút còn lại,
+  trông giống như icon "biến mất". */
+}
+
 .product .product-body .product-btns>button {
   position: relative;
   width: 40px;
@@ -1163,8 +1169,17 @@ textarea.input {
   line-height: 40px;
   background: transparent;
   border: none;
+  color: #30323A; /* Set màu tường minh thay vì trông chờ kế thừa — tránh
+  trường hợp icon vô hình do color bị ghi đè thành trắng/transparent ở đâu đó. */
   -webkit-transition: 0.2s all;
   transition: 0.2s all;
+}
+
+.product .product-body .product-btns>button i {
+  font-family: "FontAwesome" !important; /* Ép đúng font-family cho icon,
+  đề phòng bị 1 CSS/font khác ghi đè khiến glyph không render ra được. */
+  font-style: normal;
+  color: inherit;
 }
 
 .product .product-body .product-btns>button:hover {
@@ -1209,56 +1224,59 @@ textarea.input {
   left: 1px;
   right: 1px;
   bottom: 1px;
-  height: 70px;
   padding: 15px;
   background: #1e1f29;
   text-align: center;
-  box-sizing: border-box;
-  overflow: hidden;
-  opacity: 0;
-  visibility: hidden;
-  z-index: 25;
+  -webkit-transform: translateY(0%);
+  -ms-transform: translateY(0%);
+  transform: translateY(0%);
   -webkit-transition: 0.2s all;
   transition: 0.2s all;
+  z-index: 2;
 }
 
 .product:hover .add-to-cart {
-  opacity: 1;
-  visibility: visible;
+  -webkit-transform: translateY(100%);
+  -ms-transform: translateY(100%);
+  transform: translateY(100%);
 }
 
 .product .add-to-cart .add-to-cart-btn {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  max-width: 100%;
-  box-sizing: border-box;
   border: 2px solid transparent;
   height: 40px;
-  padding: 0 18px;
+  padding: 0 30px;
   background-color: #ef233c;
   color: #FFF;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: 13px;
   border-radius: 40px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   -webkit-transition: 0.2s all;
   transition: 0.2s all;
 }
 
 .product .add-to-cart .add-to-cart-btn>i {
-  margin-right: 8px;
-  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  line-height: 38px;
+  color: #D10024;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .product .add-to-cart .add-to-cart-btn:hover {
   background-color: #FFF;
   color: #D10024;
   border-color: #D10024;
+  padding: 0px 30px 0px 50px;
+}
+
+.product .add-to-cart .add-to-cart-btn:hover>i {
+  opacity: 1;
+  visibility: visible;
 }
 
 /*----------------------------*\

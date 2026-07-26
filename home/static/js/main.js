@@ -128,13 +128,24 @@
 	var priceInputMax = document.getElementById('price-max'),
 			priceInputMin = document.getElementById('price-min');
 
-	priceInputMax.addEventListener('change', function(){
-		updatePriceSlider($(this).parent() , this.value)
-	});
+	// Trang không có bộ lọc giá (trang chủ, trang chi tiết sản phẩm, wishlist...)
+	// sẽ không có 2 input này -> getElementById trả về null -> gọi thẳng
+	// addEventListener trên null làm crash TOÀN BỘ đoạn script còn lại của
+	// file main.js (lỗi "Cannot read properties of null"), khiến các đoạn
+	// code phía sau (kể cả không liên quan đến bộ lọc giá) không chạy được
+	// nữa trên những trang đó. Thêm kiểm tra null để chỉ gắn sự kiện khi
+	// các input này thực sự tồn tại trên trang.
+	if (priceInputMax) {
+		priceInputMax.addEventListener('change', function(){
+			updatePriceSlider($(this).parent() , this.value)
+		});
+	}
 
-	priceInputMin.addEventListener('change', function(){
-		updatePriceSlider($(this).parent() , this.value)
-	});
+	if (priceInputMin) {
+		priceInputMin.addEventListener('change', function(){
+			updatePriceSlider($(this).parent() , this.value)
+		});
+	}
 
 	function updatePriceSlider(elem , value) {
 		if ( elem.hasClass('price-min') ) {

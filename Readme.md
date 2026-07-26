@@ -1,192 +1,217 @@
-# Laptop E-commerce Website
+# 🖥️ EleStore (EC Computer) — Website Bán Laptop & Phụ Kiện Máy Tính
 
-Dự án với được xây dựng bằng Backend **Django (Python)** với **Server-Side**.
+Website thương mại điện tử chuyên bán laptop và phụ kiện máy tính, được xây dựng bằng **Django (Python)** theo mô hình **Server-Side Rendering (MVT)**, tích hợp thanh toán đa cổng, đăng nhập mạng xã hội và trợ lý AI tư vấn sản phẩm.
 
 ---
 
-## Công Nghệ
+## 📋 Mục lục
 
-- **Back-end**: Django (Python) - 🦸
-- **Front-end**: HTML, CSS, JavaScript -
-- **Database**: SQL -
+- [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
+- [Tính năng chính](#-tính-năng-chính)
+- [Cấu trúc dự án](#-cấu-trúc-dự-án)
+- [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt)
+- [Tài khoản test](#-tài-khoản-test)
+- [Nhóm thực hiện](#-nhóm-thực-hiện)
 
-## Team
+---
 
-** Lê Quốc Thái**
-** Huỳnh Kim Long**
+## 🛠 Công nghệ sử dụng
 
-## Hướng Dẫn Setup
+| Thành phần | Công nghệ |
+|---|---|
+| **Back-end** | Django 5.x (Python) |
+| **Front-end** | Django Template Engine, HTML5, CSS3, JavaScript, jQuery + jQuery UI |
+| **Database** | SQLite |
+| **Xác thực** | django-allauth (Email, Google, Facebook OAuth2) |
+| **API / JWT** | Django REST Framework + Simple JWT |
+| **Thanh toán** | Stripe, VNPay, MoMo, COD |
+| **AI** | Google Gemini API + ChromaDB (RAG chatbot tư vấn sản phẩm) |
+| **Khác** | django-ckeditor (rich text), django-mptt (danh mục cây), django-cors-headers |
 
-### Các Bước Setup
+---
 
-1. **Di chuyển đến thư mục dự án**
+## ✨ Tính năng chính
 
-   ```bash
-   cd elestore
-   ```
+### 🛍️ Phía khách hàng
+- Xem, tìm kiếm sản phẩm với gợi ý tự động (autocomplete kèm ảnh/giá)
+- Lọc sản phẩm theo danh mục, khoảng giá
+- Giỏ hàng, đặt hàng, theo dõi trạng thái đơn hàng
+- Thanh toán qua **Stripe / VNPay / MoMo / COD**
+- Đăng ký, đăng nhập bằng Email hoặc liên kết Google / Facebook
+- Đánh giá, bình luận sản phẩm
+- **Chatbot AI** tư vấn sản phẩm theo nhu cầu (tích hợp Gemini + RAG)
 
-2. **Tạo môi trường ảo**
-   _Windows_:
+### 🔧 Phía quản trị (Dashboard)
+- Quản lý sản phẩm, danh mục (cấu trúc cây cha - con)
+- Quản lý đơn hàng, cập nhật trạng thái xử lý
+- Quản lý người dùng, banner quảng cáo, đánh giá khách hàng
+- Thống kê doanh thu, đơn hàng theo thời gian thực (biểu đồ, thông báo tự động cập nhật)
 
-   ```bash
-   py -3.11 -m venv venv
-   ```
+---
 
-   ```bash
-   venv\Scripts\activate
-   ```
+## 📁 Cấu trúc dự án
 
-````
-   _macOS/Linux_:
+```
+elestore/
+├── home/           # Trang chủ, layout tổng, SEO, tìm kiếm, chatbot AI
+├── product/        # Quản lý sản phẩm, danh mục, đánh giá
+├── order/          # Giỏ hàng, đặt hàng, thanh toán
+├── user/           # Tài khoản, hồ sơ người dùng
+├── elestore/        # Cấu hình project (settings, urls chính)
+├── static/          # CSS, JS, hình ảnh giao diện
+├── uploads/          # Ảnh sản phẩm, banner do người dùng/admin tải lên
+├── manage.py
+└── requirements.txt
+```
 
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-````
+### Chi tiết từng module
 
-3. **Cài đặt các gói Python cần thiết**
+<details>
+<summary><b>🏠 home/</b> — Layout tổng & trang chủ</summary>
 
-   ```bash
-   pip install -r requirements.txt
-   pip install google-genai
-   ```
+- [`home/templates/homebase.html`](home/templates/homebase.html) — template gốc, mọi trang đều kế thừa từ đây
+- [`home/views.py`](home/views.py) — xử lý trang chủ, chi tiết sản phẩm theo danh mục
+- [`home/forms.py`](home/forms.py) — xử lý form tìm kiếm sản phẩm
+- [`home/chatbot_views.py`](home/chatbot_views.py) — xử lý chatbot AI tư vấn sản phẩm
 
-4. **Áp dụng migrations cho database**
+</details>
 
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
+<details>
+<summary><b>📦 product/</b> — Quản lý sản phẩm</summary>
 
-5. **Khởi động server**
+- [`product/admin.py`](product/admin.py) — quản lý danh mục (dạng cây) và sản phẩm trong trang admin
+- [`product/models.py`](product/models.py) — cấu trúc dữ liệu danh mục, sản phẩm, hình ảnh, đánh giá
+- [`product/views.py`](product/views.py) — xử lý hiển thị, tìm kiếm, đánh giá sản phẩm
 
-   ```bash
-   python manage.py runserver
-   ```
+</details>
 
-6. **Tạo tài khoản truy cập trang Admin**
+<details>
+<summary><b>🛒 order/</b> — Giỏ hàng & đơn hàng</summary>
 
-   ```bash
-   python manage.py createsuperuser
-   ```
+- [`order/templates/Order_Form.html`](order/templates/Order_Form.html) — giao diện đặt hàng, thanh toán
+- [`order/templates/shopcart_products.html`](order/templates/shopcart_products.html) — giao diện giỏ hàng
+- [`order/templates/Order_completed.html`](order/templates/Order_completed.html) — giao diện sau khi thanh toán thành công
+- [`order/models.py`](order/models.py) — cấu trúc dữ liệu đơn hàng, phương thức thanh toán
+- [`order/views.py`](order/views.py) — xử lý logic giỏ hàng, đặt hàng, tích hợp cổng thanh toán
 
-7. **Truy cập website**
+</details>
 
-- Mở trình duyệt : `http://localhost:8000`
-- Trang Admin : `http://localhost:8000/admin`
-- Trang Dashboard : `http://localhost:8000/dashboard`
+<details>
+<summary><b>👤 user/</b> — Tài khoản người dùng</summary>
 
-### Optional(nếu có cài và đang chạy docker)
+- Đăng ký, đăng nhập, quản lý hồ sơ, đổi mật khẩu
+- [`user/models.py`](user/models.py) — mở rộng thông tin người dùng qua `UserProfile`
+- [`user/views.py`](user/views.py) / [`user/urls.py`](user/urls.py) — định tuyến và xử lý logic
+- [`user/admin.py`](user/admin.py) — quản trị người dùng
+
+</details>
+
+---
+
+## 🚀 Hướng dẫn cài đặt
+
+### 1. Di chuyển đến thư mục dự án
 
 ```bash
-   docker-compose up --build
+cd elestore
 ```
 
-## Các tài khoản có thể đăng nhập vào web
+### 2. Tạo môi trường ảo
 
-** tk: kimlong299 , mk: 123456 (Quản trị viên)
-** tk: quocthai438 , mk: 12345678 (Nhân viên)
-** tk: tuancuong123 , mk: 12345678910 (Khách hàng)
-** tk: quocanh123 , mk: quocanh123 (Khách hàng)
-** tk: kimtruc456 , mk: kimtruc456 (Khách hàng)
-
-## Tài khoản NCB Test VNPay
-
-** Số thẻ: 9704198526191432198
-** Tên chủ thẻ: NGUYEN VAN A
-** Ngày phát hành: 07/15
-** Nhập OTP: 123456
-
-## Cấu trúc dự án:
-
-### Giao diện (Phần xử lý Giao diện chính cho website)
-
-```
-elestore/
-├── home/
+**Windows:**
+```bash
+py -3.11 -m venv venv
+venv\Scripts\activate
 ```
 
-Thư mục `home` là một trong những thư mục chính của dự án, chứa các thành phần cơ bản của website như layout tổng ,SEO ,....
-
-** Layout template tổng , SEO , render sản phẩm **
-[home](home\templates\homebase.html)
--- tất cả những trang cơ bản của web site sẽ đều được kế thừa template từ file này
-
-** Xử lý code python để lấy giữ liệu sản phẩm theo trang tương ứng **
-[home,details,sản phẩm theo category](home\views.py)
-
-** Phần xử lý form search sản phẩm **
-[search](home\forms.py)
-
-## Chức Năng (Product)
-
-```
-elestore/
-├── product/
-    ├── admin.py     # Quản lý giao diện admin cho sản phẩm và danh mục
-    ├── models.py    # Định nghĩa cấu trúc dữ liệu
-    ├── views.py     # Xử lý logic và hiển thị
-    └── urls.py      # Định tuyến URL
+**macOS / Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-Thư mục product là một trong những thư mục Liên quan đến data của sản phẩmphẩm, chứa các thành phần quản lý sản phẩm và danh mục sản phẩm.
+### 3. Cài đặt các gói cần thiết
 
-** Quản lý danh mục và sản phẩm trong trang admin **
-[admin](\product\admin.py) -- quản lý danh mục sản phẩm theo cấu trúc cây, quản lý sản phẩm với hình ảnh và thông tin chi tiết
-
-** Xử lý code python để quản lý dữ liệu sản phẩm **
-[models](\product\models.py) -- định nghĩa cấu trúc dữ liệu cho danh mục, sản phẩm, hình ảnh và đánh giá sản phẩm
-
-** Xử lý đánh giá sản phẩm **
-[views](\product\view.py) -- xử lý thêm đánh giá và bình luận cho sản phẩm
-
-## Chức Năng (Order)
-
-Thư mục `order` quản lý toàn bộ quy trình mua hàng, từ giỏ hàng đến đơn hàng.
-
-```
-elestore/
-├── order/
-    ├── admin.py     # Quản lý đơn hàng trong admin
-    ├── models.py    # Cấu trúc dữ liệu đơn hàng
-    ├── views.py     # Xử lý giỏ hàng và đặt hàng
-    ├── urls.py      # Định tuyến URL
-    └── templates/   # Giao diện người dùng
+```bash
+pip install -r requirements.txt
 ```
 
-** Template giao diện người dùng **
-[order form](\order\templates\Order_Form.html) -- giao diện người dùng cho các chức năng liên quan đến đơn hàng, giỏ hàng, thanh toán
-[giao diện cart](\order\templates\shopcart_products.html) -- giao diện người dùng cho giỏ hàng
-[Giao diện khi thanh toán thành công](\order\templates\Order_completed.html) -- giao diện người dùng cho khi thanh toán thành công
+### 4. Cấu hình biến môi trường
 
-** Quản lý đơn hàng trong trang admin **
+Copy file `.env.example` thành `.env` và điền đầy đủ giá trị thật (secret key, thông tin cổng thanh toán, email, Gemini API key...):
 
-[admin](\order\admin.py) -- quản lý đơn hàng trong trang admin
+```bash
+cp .env.example .env
+```
 
-** Xử lý code python để quản lý đơn hàng **
+### 5. Áp dụng migrations cho database
 
-[models](\order\models.py) -- định nghĩa cấu trúc dữ liệu cho đơn hàng, chi tiết đơn hàng, phương thức thanh toán
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
-** Xử lý logic cho các chức năng liên quan đến đơn hàng **
+### 6. Tạo tài khoản quản trị
 
-[views](\order\views.py) -- xử lý logic cho các chức năng liên quan đến đơn hàng, giỏ hàng, thanh toán
+```bash
+python manage.py createsuperuser
+```
 
-** Định tuyến URL cho các chức năng liên quan đến đơn hàng **
+### 7. Khởi động server
 
-[urls](\order\urls.py) -- định tuyến URL cho các chức năng liên quan đến đơn hàng, giỏ hàng, thanh toán
+```bash
+python manage.py runserver
+```
 
-## Chức năng (user)
+### 8. Truy cập website
 
-- Đăng ký & đăng nhập
+| Trang | Đường dẫn |
+|---|---|
+| Trang chủ | `http://localhost:8000` |
+| Django Admin | `http://localhost:8000/admin` |
+| Dashboard quản trị | `http://localhost:8000/dashboard-login` |
 
-- Quản lý hồ sơ cá nhân & đổi mật khẩu
+### (Tùy chọn) Chạy bằng Docker
 
-- Theo dõi đơn hàng & bình luận
+```bash
+docker-compose up --build
+```
 
-- Tùy chỉnh form và giao diện người dùng với template HTML
+---
 
-- [user](\user\models.py) giúp mở rộng thông tin người dùng thông qua class UserProfile
+## 🔑 Tài khoản test
 
-- Định tuyến và xử lý logic qua [user](\user\views.py) và [user](\user\urls.py)
+> Toàn bộ tài khoản và thẻ dưới đây đều là dữ liệu **test/sandbox**, không phải tài khoản hay thẻ ngân hàng thật.
 
-- Quản trị người dùng qua [user](\user\admin.py)
+### Tài khoản đăng nhập demo
+
+| Tài khoản | Mật khẩu | Vai trò |
+|---|---|---|
+| kimlong299 | 123456 | Quản trị viên |
+| quocthai438 | 12345678 | Nhân viên |
+| tuancuong123 | 12345678910 | Khách hàng |
+| quocanh123 | quocanh123 | Khách hàng |
+| kimtruc456 | kimtruc456 | Khách hàng |
+
+### Thẻ test VNPay (NCB)
+
+- **Số thẻ:** 9704198526191432198
+- **Tên chủ thẻ:** NGUYEN VAN A
+- **Ngày phát hành:** 07/15
+- **OTP:** 123456
+
+### Cổng thanh toán khác
+
+- **MoMo**: sử dụng bộ tài khoản test sandbox công khai theo tài liệu tích hợp của MoMo
+- **Stripe**: sử dụng [thẻ test của Stripe](https://docs.stripe.com/testing)
+
+---
+
+## 👥 Nhóm thực hiện
+
+| Họ và tên | MSSV |
+|---|---|
+| Lê Quốc Thái | 24810077 |
+| Huỳnh Kim Long | 24810067 |
+
+**Ngành:** Công nghệ Thông tin — Trường Đại học Công nghệ Kỹ thuật TP.HCM (HCM-UTE)
