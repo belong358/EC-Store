@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
-from product.models import CommentForm, Comment, Product, Category, Wishlist
+from product.models import CommentForm, Comment, Product, Category, Wishlist, get_categories
 from home.models import Setting
 from order.models import OrderProduct
 from django.contrib.auth.decorators import login_required
@@ -38,7 +38,7 @@ def remove_from_wishlist(request, id):
 
 @login_required(login_url='/login')
 def wishlist_view(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     wishlist_items = Wishlist.objects.filter(user=request.user)
     context = {
@@ -79,7 +79,7 @@ def remove_from_compare(request, id):
 def compare_products(request):
     compare_list = request.session.get('compare_list', [])
     products = Product.objects.filter(id__in=compare_list)
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
 
     ai_summary = None

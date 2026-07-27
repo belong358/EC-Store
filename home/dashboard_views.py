@@ -17,7 +17,7 @@ from django.utils.text import slugify
 from django.http import JsonResponse
 
 from order.models import Order, OrderProduct, restock_order, STOCK_DEDUCTED_STATUSES, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_LOCKED
-from product.models import Product, Category, Comment
+from product.models import Product, Category, Comment, get_categories
 from home.models import ContactMessage, Banner
 
 
@@ -281,7 +281,7 @@ def _save_product(request, product=None):
 
 @staff_member_required(login_url='/dashboard-login/')
 def dashboard_product_add(request):
-    categories = Category.objects.all()
+    categories = get_categories()
     if request.method == 'POST':
         p = _save_product(request)
         flash.success(request, f'Đã thêm sản phẩm "{p.title}"')
@@ -295,7 +295,7 @@ def dashboard_product_add(request):
 @staff_member_required(login_url='/dashboard-login/')
 def dashboard_product_edit(request, product_id):
     product    = get_object_or_404(Product, id=product_id)
-    categories = Category.objects.all()
+    categories = get_categories()
     if request.method == 'POST':
         _save_product(request, product)
         flash.success(request, f'Đã cập nhật sản phẩm "{product.title}"')

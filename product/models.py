@@ -3,7 +3,10 @@ from django.db import models
 from ckeditor_uploader.fields import RichTextUploadingField
 from django.contrib.auth.models import User
 # Create your models here.
+from django.core.cache import cache
 from django.db.models import Avg, Count
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 from django.forms import ModelForm
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -38,6 +41,33 @@ class Category(MPTTModel):
         return self.title
     class MPTTMeta:
         order_insertion_by=['title']
+
+
+# ════════════════════════════════════════════════════════════════
+#  CACHE cho cây danh mục — trước đây `Category.objects.all()` được
+#  gọi lại ở gần như MỌI view (~25 chỗ) dù danh mục hiếm khi đổi,
+#  tạo ra 1 query lặp lại không cần thiết trên mỗi request. Cache tự
+#  hết hạn sau 1h, và tự bị xoá ngay khi có Category được thêm/sửa/xoá
+#  (qua Django admin hoặc bất kỳ nơi nào khác) nên không sợ dữ liệu cũ.
+# ════════════════════════════════════════════════════════════════
+CATEGORY_CACHE_KEY = 'product_category_tree'
+CATEGORY_CACHE_TIMEOUT = 3600  # giây
+
+
+def get_categories():
+    """Danh sách Category (cây danh mục) có cache — dùng thay cho
+    Category.objects.all() ở các view chỉ cần hiển thị (menu, breadcrumb...)."""
+    categories = cache.get(CATEGORY_CACHE_KEY)
+    if categories is None:
+        categories = list(Category.objects.all())
+        cache.set(CATEGORY_CACHE_KEY, categories, CATEGORY_CACHE_TIMEOUT)
+    return categories
+
+
+@receiver(post_save, sender=Category)
+@receiver(post_delete, sender=Category)
+def _invalidate_category_cache(sender, **kwargs):
+    cache.delete(CATEGORY_CACHE_KEY)
 
 class Product(models.Model):
     STATUS = (

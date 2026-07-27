@@ -87,36 +87,6 @@
 
 {% include 'chatbot.html' %}
 
-<!-- Chatbot ở trên tự nạp thêm Font Awesome bản 7.0.1 từ CDN (khác bản 4.7.0
-	 site đang dùng). Từ FontAwesome 5 trở đi, cú pháp hậu tố "-o" (outline,
-	 vd fa-heart-o) đã bị loại bỏ hoàn toàn, nên khi bản 7 nạp SAU sẽ đè mất
-	 định nghĩa đúng của các icon "-o" từ bản 4 (dù các icon khác như
-	 fa-exchange không bị ảnh hưởng vì đã đổi tên ở bản 7 nên không đụng
-	 nhau). Nạp lại đúng file Font Awesome 4 nội bộ của site tại đây — load
-	 SAU cùng để giành lại quyền ưu tiên hiển thị cho các icon kiểu cũ đang
-	 dùng khắp site (So sánh, Yêu thích, Giỏ hàng...), không ảnh hưởng đến
-	 icon riêng của khung chat (nó dùng class hoàn toàn khác, vd fa-solid). -->
-{% load static %}
-<link rel="stylesheet" href="{% static '' %}css/font-awesome.min.css">
-
-<!-- Widget chatbot có 2 icon (fa-comment, fa-comments) TRÙNG TÊN với icon có
-	 sẵn trong bản v4 vừa nạp lại ở trên -> nếu không chặn riêng, v4 sẽ ghi
-	 đè luôn cả icon của chính widget chat. Khoanh vùng bảo vệ 2 icon này
-	 trong phạm vi #chatbot-bubble/#chatbot-window, ép chúng giữ đúng icon
-	 "bong bóng chat" bất kể phiên bản Font Awesome nào đang thắng ở đây. -->
-<style>
-	#chatbot-bubble i.fa-comment:before,
-	#chatbot-window i.fa-comments:before {
-		font-family: "FontAwesome" !important;
-	}
-	#chatbot-bubble i.fa-comment:before {
-		content: "\f075" !important;
-	}
-	#chatbot-window i.fa-comments:before {
-		content: "\f086" !important;
-	}
-</style>
-
 <!-- Comparison Logic JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>

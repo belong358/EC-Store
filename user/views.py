@@ -9,7 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 # Create your views here.
 from order.models import Order, OrderProduct, restock_order
-from product.models import Category, Comment
+from product.models import Category, Comment, get_categories
 from user.forms import SignUpForm, UserUpdateForm, ProfileUpdateForm
 from user.models import UserProfile
 from order.models import ShopCart
@@ -18,7 +18,7 @@ from home.models import Setting
 
 @login_required(login_url='/login')
 def index(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user  # Access User Session information
     profile = UserProfile.objects.get(user_id=current_user.id)
@@ -67,7 +67,7 @@ def login_form(request):
             next_param = f"?next={next_url}" if next_url != '/' else ''
             return HttpResponseRedirect(f'/login{next_param}')
 
-    category = Category.objects.all()
+    category = get_categories()
     next_url = _safe_next(request.GET.get('next'))
     context = {'category': category, 'next': next_url}
     return render(request, 'login_form.html', context)
@@ -95,7 +95,7 @@ def signup_form(request):
             return HttpResponseRedirect('/signup')
 
     form = SignUpForm()
-    category = Category.objects.all()
+    category = get_categories()
     context = {'category': category,
                'form': form,
                }
@@ -118,7 +118,7 @@ def user_update(request):
             messages.success(request, 'Tài khoản của bạn đã được cập nhật!')
             return HttpResponseRedirect('/user')
     else:
-        category = Category.objects.all()
+        category = get_categories()
         setting = Setting.objects.get(pk=1)
         user_form = UserUpdateForm(instance=request.user)
         profile_form = ProfileUpdateForm(instance=request.user.userprofile)
@@ -144,7 +144,7 @@ def user_password(request):
             messages.error(request, 'Hãy nhập đúng lỗi bên dưới.<br>' + str(form.errors))
             return HttpResponseRedirect('/user/password')
     else:
-        category = Category.objects.all()
+        category = get_categories()
         setting = Setting.objects.get(pk=1)
         form = PasswordChangeForm(request.user)
         return render(request, 'user_password.html', {'form': form, 'category': category, 'setting': setting})
@@ -152,7 +152,7 @@ def user_password(request):
 
 @login_required(login_url='/login')  # Check login
 def user_orders(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     orders = Order.objects.filter(user_id=current_user.id)
@@ -165,7 +165,7 @@ def user_orders(request):
 
 @login_required(login_url='/login')  # Check login
 def user_orderdetail(request, id):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     order = Order.objects.get(user_id=current_user.id, id=id)
@@ -181,7 +181,7 @@ def user_orderdetail(request, id):
 
 @login_required(login_url='/login')  # Check login
 def user_order_product(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     order_product = OrderProduct.objects.filter(user_id=current_user.id).order_by('-id')
@@ -194,7 +194,7 @@ def user_order_product(request):
 
 @login_required(login_url='/login')  # Check login
 def user_order_product_detail(request, id, oid):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     order = Order.objects.get(user_id=current_user.id, id=oid)
@@ -209,7 +209,7 @@ def user_order_product_detail(request, id, oid):
 
 
 def user_comments(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     comments = Comment.objects.filter(user_id=current_user.id)

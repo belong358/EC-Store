@@ -369,16 +369,20 @@
 
 <!-- GSAP CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<!-- Đã bỏ Font Awesome 7 CDN (trước đây nạp thêm ở đây) — toàn bộ icon của
+	 chatbot giờ dùng chung bản Font Awesome 4 nội bộ của site (font-awesome.min.css
+	 đã có sẵn trong <head>), không cần tải thêm gì từ CDN nữa. Giúp chatbot
+	 hoạt động cả khi không có mạng, và loại bỏ xung đột 2 phiên bản Font
+	 Awesome từng gây lỗi icon "Yêu thích" trước đây. -->
 
 <div id="chatbot-bubble">
-    <i class="fa-solid fa-comment"></i>
+    <i class="fa fa-comment"></i>
 </div>
 
 <div id="chatbot-window">
     <div id="chatbot-header">
         <div class="ai-avatar">
-         <i class="fas fa-comments"></i>
+         <i class="fa fa-comments"></i>
         </div>
         <div class="header-info">
             <h4>EleStore AI</h4>
@@ -392,7 +396,7 @@
     </div>
     
     <div id="chatbot-input-area">
-        <button id="emoji-toggle" title="Chọn emoji"><i class="fa-solid fa-face-smile"></i></button>
+        <button id="emoji-toggle" title="Chọn emoji"><i class="fa fa-smile-o"></i></button>
 
         <div id="emoji-panel">
             <div id="emoji-tabs"></div>

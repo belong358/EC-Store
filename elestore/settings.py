@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
     'corsheaders',
 
 ]
@@ -238,26 +237,6 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         }
     },
-    'facebook': {
-        'APP': {
-            'client_id': os.getenv('FACEBOOK_CLIENT_ID', ''),
-            'secret': os.getenv('FACEBOOK_CLIENT_SECRET', ''),
-        },
-        'METHOD': 'oauth2',
-        'SCOPE': ['email', 'public_profile'],
-        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
-        'INIT_PARAMS': {'cookie': True},
-        'FIELDS': [
-            'id',
-            'email',
-            'name',
-            'first_name',
-            'last_name',
-        ],
-        'EXCHANGE_TOKEN': True,
-        'VERIFIED_EMAIL': False,
-        'VERSION': 'v18.0', 
-    }
 }
 
 LOGIN_REDIRECT_URL = '/'

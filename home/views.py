@@ -8,7 +8,7 @@ from django.shortcuts import render, get_object_or_404
 from home.forms import SearchForm
 from django.utils import timezone
 from home.models import Setting, ContactForm, ContactMessage, Banner
-from product.models import Category, Product, Images, Comment
+from product.models import Category, Product, Images, Comment, get_categories
 from order.models import OrderProduct
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -23,7 +23,7 @@ def get_random_products(queryset, n):
     return Product.objects.filter(id__in=random_ids)
 # Phần lấy data trong database và hiển thị ra trang chủ
 def index(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
 
     # Lấy Banner Carousel
@@ -73,20 +73,20 @@ def index(request):
 
 def privacy_policy(request):
     setting = Setting.objects.get(pk=1)
-    category = Category.objects.all()
+    category = get_categories()
     context = {'setting': setting, 'category': category}
     return render(request, 'privacy_policy.html', context)
 
 
 def aboutus(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     context = {'setting': setting, 'category': category}
     return render(request, 'about.html', context)
 
 
 def contact(request):
-    category = Category.objects.all()
+    category = get_categories()
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
@@ -110,7 +110,7 @@ def contact(request):
 # ════════════════════════════════════════════════════════════════
 def category_products(request, id, slug):
     setting = Setting.objects.get(pk=1)
-    category = Category.objects.all()  # dùng cho menu nav (recursetree)
+    category = get_categories()  # dùng cho menu nav (recursetree)
 
     category_all = get_object_or_404(Category, id=id, slug=slug)
     categories_all = category_all.get_descendants(include_self=True)
@@ -177,7 +177,7 @@ def search(request):
         if form.is_valid():
             query = form.cleaned_data['query']
             products = Product.objects.filter(title__icontains=query)
-            category = Category.objects.all()
+            category = get_categories()
             context = {
                 'products': products, 'query': query,
                 'category': category, 'products_mo': products_mo, 'setting': setting,
@@ -208,7 +208,7 @@ def search_auto(request):
 
 def product_detail(request, id, slug):
     query = request.GET.get('q')
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
 
     product = get_object_or_404(Product, pk=id)

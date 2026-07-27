@@ -15,7 +15,7 @@ from fpdf import FPDF
 
 from order.models import ShopCart, ShopCartForm, OrderForm, Order, OrderProduct
 from home.models import Setting
-from product.models import Category, Product
+from product.models import Category, Product, get_categories
 from user.models import UserProfile
 from order.vnpay import vnpay
 from order.momo import MoMoPayment
@@ -195,7 +195,7 @@ def addtoshopcart(request, id):
 
 @login_required(login_url='/login')
 def shopcart(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     shopcart = ShopCart.objects.filter(user_id=current_user.id).select_related('product')
@@ -208,8 +208,11 @@ def shopcart(request):
 
 @login_required(login_url='/login')
 def deletefromcart(request, id):
-    ShopCart.objects.filter(id=id).delete()
-    messages.success(request, "Sản phẩm đã xóa khỏi giỏ hàng.")
+    deleted, _ = ShopCart.objects.filter(id=id, user_id=request.user.id).delete()
+    if deleted:
+        messages.success(request, "Sản phẩm đã xóa khỏi giỏ hàng.")
+    else:
+        messages.error(request, "Không tìm thấy sản phẩm trong giỏ hàng của bạn.")
     return HttpResponseRedirect("/shopcart")
 
 @login_required(login_url='/login')
@@ -264,7 +267,7 @@ def get_checkout_config(request, order_id):
 
 @login_required(login_url='/login')
 def orderproduct(request):
-    category = Category.objects.all()
+    category = get_categories()
     setting = Setting.objects.get(pk=1)
     current_user = request.user
     shopcart = ShopCart.objects.filter(user_id=current_user.id)
@@ -396,6 +399,7 @@ def orderproduct(request):
 
             else: # COD
                 # Thanh toán khi nhận hàng, hoàn tất luôn hoặc chờ xác nhận
+                confirm_order_paid(data)
                 messages.success(request, "Đơn hàng của bạn đã được tiếp nhận (COD).")
                 return HttpResponseRedirect(reverse('payment_success') + f"?order_id={data.id}&method=COD")
                 
@@ -419,6 +423,7 @@ def vnpay_return(request):
         if vnp_ResponseCode == "00":
             try:
                 order = Order.objects.get(code=order_code)
+                confirm_order_paid(order)
                 # Sử dụng reverse để lấy URL chính xác của payment_success
                 success_url = reverse('payment_success')
                 return HttpResponseRedirect(f"{success_url}?order_id={order.id}&method=VNPay")
@@ -473,44 +478,43 @@ def confirm_order_paid(order):
 
     return True
 
-
+@login_required(login_url='/login')
 def payment_success(request):
     session_id = request.GET.get('session_id')
     order_id = request.GET.get('order_id')
-    method = request.GET.get('method')
-    
+
     order = None
-    if session_id: # Stripe
+    if session_id:  # Stripe
         try:
             session = stripe.checkout.Session.retrieve(session_id)
             if session.payment_status == 'paid':
-                order_id = session.metadata.order_id
-                order = Order.objects.get(id=order_id)
+                order = Order.objects.filter(
+                    id=session.metadata.order_id, user_id=request.user.id
+                ).first()
+                if order:
+                    confirm_order_paid(order)  # đã verify thật qua Stripe API ở trên
         except Exception as e:
             messages.error(request, f"Lỗi xác thực Stripe: {str(e)}")
             return HttpResponseRedirect('/')
-    elif order_id: # COD, VNPay hoặc MoMo
-        order = Order.objects.get(id=order_id)
+    elif order_id:  # COD, VNPay hoặc MoMo — đã được xác nhận từ trước ở nơi verify
+        order = Order.objects.filter(id=order_id, user_id=request.user.id).first()
 
     if order:
         if order.status == 'Chờ xác nhận':
-            confirm_order_paid(order)
+            # Đơn chưa từng được xác nhận qua kênh hợp lệ nào -> KHÔNG tự ý
+            # xác nhận ở đây nữa. Có thể do thanh toán chưa hoàn tất, hoặc
+            # IPN/redirect chưa kịp xử lý.
+            messages.warning(request, "Đơn hàng đang chờ xác nhận thanh toán. Vui lòng thử lại sau ít phút.")
+            return HttpResponseRedirect('/shopcart/')
 
+        if order.status in ('Chờ lấy hàng', 'Chờ giao hàng', 'Đã giao hàng'):
             if 'cart_items' in request.session:
                 request.session['cart_items'] = 0
 
-            category = Category.objects.all()
+            category = get_categories()
             setting = Setting.objects.get(pk=1)
             msg = "Thanh toán thành công!" if order.payment_method != 'COD' else "Đặt hàng thành công!"
             messages.success(request, f"{msg} Hóa đơn đã được gửi vào email của bạn.")
-            return render(request, 'Order_Completed.html', {'ordercode': order.code, 'category': category, 'setting': setting})
-
-        elif order.status in ('Chờ lấy hàng', 'Chờ giao hàng', 'Đã giao hàng'):
-            # Đơn đã được xác nhận từ trước (ví dụ MoMo IPN xử lý nhanh hơn lượt
-            # redirect của người dùng) -> chỉ hiển thị lại trang hoàn tất, không
-            # trừ kho/gửi mail thêm lần nữa.
-            category = Category.objects.all()
-            setting = Setting.objects.get(pk=1)
             return render(request, 'Order_Completed.html', {'ordercode': order.code, 'category': category, 'setting': setting})
 
     return HttpResponseRedirect('/')
@@ -535,6 +539,10 @@ def momo_return(request):
         if result_code == '0': # Thành công
             try:
                 order = Order.objects.get(code=order_code)
+                # FIX: xác nhận ngay khi chữ ký MoMo (redirect) đã được kiểm chứng,
+                # cùng lý do như VNPay ở trên — không để payment_success tự tin
+                # order_id gửi lên.
+                confirm_order_paid(order)
                 success_url = reverse('payment_success')
                 return HttpResponseRedirect(f"{success_url}?order_id={order.id}&method=MoMo")
             except Order.DoesNotExist:
