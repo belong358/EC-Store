@@ -169,7 +169,7 @@ Chi tiết từng nhóm biến trong `.env`:
 | `DJANGO_DEBUG` | Không | Để `True` khi chạy local (demo/chấm điểm), `False` khi deploy thật |
 | `DJANGO_ALLOWED_HOSTS` | Không | Giữ mặc định `localhost,127.0.0.1` nếu chạy máy local |
 | `DB_ENGINE`, `DB_NAME`... | Không | Giữ mặc định SQLite, không cần sửa nếu không dùng PostgreSQL/MySQL |
-| `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | Không* | Chỉ cần nếu muốn test gửi email thật (VD: xác nhận đăng ký). Với Gmail phải dùng **App Password** (16 ký tự), không dùng mật khẩu đăng nhập Gmail thường |
+| `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | Không* | Để trống vẫn chạy được — hệ thống tự in email xác nhận đăng ký ra terminal thay vì gửi thật (console backend). Chỉ cần điền nếu muốn test gửi email thật, khi đó với Gmail phải dùng **App Password** (16 ký tự), không dùng mật khẩu đăng nhập Gmail thường |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Không* | Chỉ cần nếu muốn test đăng nhập Google, lấy tại [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
 | `STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY` | Không* | Chỉ cần nếu muốn test thanh toán Stripe, lấy tại [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys) (chế độ Test mode) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | ✅ Có (nếu muốn dùng chatbot AI) | Xem cách lấy bên dưới |
@@ -204,7 +204,7 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 4. Google sẽ hiện ra một mã gồm 16 ký tự (dạng `xxxx xxxx xxxx xxxx`) — copy mã này (bỏ khoảng trắng hoặc giữ nguyên đều được) và dán vào biến `EMAIL_HOST_PASSWORD` trong `.env`
 5. Biến `EMAIL_HOST_USER` điền đúng địa chỉ Gmail đã tạo App Password ở bước trên
 
-> Nếu không cần test gửi email, có thể để trống 2 biến này — website vẫn chạy bình thường, chỉ tính năng gửi email (VD: xác nhận đăng ký) sẽ không hoạt động.
+> Nếu không cần test gửi email thật, có thể để trống 2 biến này — hệ thống sẽ tự in nội dung email xác nhận (kèm link kích hoạt tài khoản) ra terminal khi chạy `python manage.py runserver`, vẫn test được luồng đăng ký/xác nhận email bình thường mà không cần cấu hình Gmail.
 
 ### 5. Áp dụng migrations cho database
 
