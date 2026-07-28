@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from user.api_views import GoogleLogin, FacebookLogin
+from user.api_views import GoogleLogin
 import home
 from home import views
 from home import dashboard_views
@@ -73,7 +73,6 @@ urlpatterns = [
     path('api/auth/',               include('dj_rest_auth.urls')),
     path('api/auth/registration/',  include('dj_rest_auth.registration.urls')),
     path('api/auth/google/',        GoogleLogin.as_view(),  name='google_login'),
-    path('api/auth/facebook/',      FacebookLogin.as_view(), name='facebook_login'),
     path('accounts/',               include('allauth.urls')),
 ]
 
