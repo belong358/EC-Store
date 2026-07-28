@@ -10,3 +10,10 @@ dbtest.sqlite3
 
 # Virtual environment
 venv/
+
+# Python bytecode / cache
+__pycache__/
+*.pyc
+
+# Ảnh sản phẩm/banner do người dùng tải lên khi chạy web (dữ liệu runtime, không phải mã nguồn)
+uploads/
