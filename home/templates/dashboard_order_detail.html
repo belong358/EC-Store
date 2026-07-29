@@ -133,8 +133,8 @@
             {% if order.status == 'Đã giao hàng' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
           </span>
           {% else %}
-          <span class="pill {% if order.status != 'Chờ xác nhận' %}pill-done{% else %}pill-new{% endif %}">
-            {% if order.status != 'Chờ xác nhận' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
+          <span class="pill {% if order.status != 'Chờ xác nhận' and order.status != 'Đã hủy' %}pill-done{% else %}pill-new{% endif %}">
+            {% if order.status != 'Chờ xác nhận' and order.status != 'Đã hủy' %}Đã thanh toán{% else %}Chưa thanh toán{% endif %}
           </span>
           {% endif %}
         </div>

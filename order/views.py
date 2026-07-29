@@ -326,7 +326,7 @@ def orderproduct(request):
                         line_items=line_items,
                         mode='payment',
                         success_url=request.build_absolute_uri(reverse('payment_success')) + "?session_id={CHECKOUT_SESSION_ID}",
-                        cancel_url=request.build_absolute_uri(reverse('payment_cancel')),
+                        cancel_url=request.build_absolute_uri(reverse('payment_cancel')) + f"?order_code={ordercode}",
                         metadata={'order_id': data.id, 'order_code': ordercode}
                     )
                     data.stripe_payment_id = checkout_session.id
@@ -431,6 +431,7 @@ def vnpay_return(request):
                 messages.error(request, "Không tìm thấy đơn hàng sau khi thanh toán.")
                 return HttpResponseRedirect('/shopcart/')
         else:
+            Order.objects.filter(code=order_code, status='Chờ xác nhận').update(status='Đã hủy')
             messages.error(request, f"Thanh toán VNPay không thành công. Mã lỗi: {vnp_ResponseCode}")
             return HttpResponseRedirect('/shopcart/')
     else:
@@ -520,6 +521,9 @@ def payment_success(request):
     return HttpResponseRedirect('/')
 
 def payment_cancel(request):
+    order_code = request.GET.get('order_code')
+    if order_code:
+        Order.objects.filter(code=order_code, status='Chờ xác nhận').update(status='Đã hủy')
     messages.warning(request, "Giao dịch đã bị hủy.")
     return HttpResponseRedirect('/shopcart')
 
@@ -549,6 +553,7 @@ def momo_return(request):
                 messages.error(request, "Không tìm thấy đơn hàng MoMo.")
                 return HttpResponseRedirect('/shopcart/')
         else:
+            Order.objects.filter(code=order_code, status='Chờ xác nhận').update(status='Đã hủy')
             messages.error(request, f"Thanh toán MoMo thất bại: {data.get('message')}")
             return HttpResponseRedirect('/shopcart/')
     else:
