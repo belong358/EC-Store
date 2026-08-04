@@ -1,0 +1,93 @@
+{% extends 'homebase.html' %}
+{% load humanize %}
+
+{% block title %} Thanh toán chuyển khoản QR (SePay) {% endblock %}
+
+{% block body %}
+<div id="breadcrumb">
+    <div class="container">
+        <ul class="breadcrumb">
+            <li><a href="/">Trang chủ</a></li>
+            <li class="active">Thanh toán QR Ngân hàng</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <div class="section-title">
+                    <h3 class="title">Thanh toán qua QR Ngân hàng</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="billing-details text-center" style="border: 1px solid #E4E7ED; padding: 30px; border-radius: 10px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <h4 style="color: #1a56db;">Tổng thanh toán: {{ order.total|floatformat:0|intcomma }} VND</h4>
+                    <p class="text-muted">Đơn hàng: #{{ order.code }}</p>
+
+                    <hr>
+
+                    <div id="qrcode-container" style="display: inline-block; padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 5px; margin: 20px 0;">
+                        {% if qr_image_url %}
+                            <img src="{{ qr_image_url }}" alt="QR chuyển khoản" style="max-width: 260px;">
+                        {% else %}
+                            <p class="text-danger">Chưa cấu hình được QR thanh toán, vui lòng liên hệ quản trị viên.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert" style="background:#eff6ff;border:2px solid #93c5fd;border-radius:10px;margin:15px 0;text-align:left;padding:14px 18px;">
+                        <p style="margin-bottom:6px"><strong>Nội dung chuyển khoản (bắt buộc):</strong></p>
+                        <p style="margin-bottom:0; font-size: 20px; font-weight: 800; letter-spacing: 1px; color:#1a56db;">{{ transfer_content }}</p>
+                    </div>
+
+                    <div id="status-message">
+                        <p><i class="fa fa-refresh fa-spin"></i> Đang chờ ghi nhận chuyển khoản...</p>
+                        <p class="small text-muted">Mở app ngân hàng bất kỳ, quét mã QR trên và giữ đúng nội dung chuyển khoản như trên.</p>
+                    </div>
+
+                    <a href="{% url 'payment_cancel' %}?order_code={{ order.code }}" class="btn btn-default" style="margin-top: 15px;" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng #{{ order.code }} này không?');">
+                        <i class="fa fa-times"></i> Hủy đơn hàng
+                    </a>
+
+                    <div class="alert" style="background:#fff7ed;border:2px solid #f59e0b;border-radius:10px;margin-top: 20px; text-align: left;padding:18px 20px;">
+                        <h5 style="color:#b45309;font-weight:800;margin-top:0"><i class="fa fa-triangle-exclamation"></i> Lưu ý khi test</h5>
+                        <p style="margin-bottom:0">Đây là QR chuyển khoản ngân hàng thật (chuẩn VietQR). Nếu chỉ muốn test luồng xử lý đơn hàng mà không dùng tiền thật, hãy vào trang quản trị SePay (my.sepay.vn) và dùng tính năng <strong>"Giả lập giao dịch"</strong> với đúng nội dung chuyển khoản ở trên và số tiền {{ order.total|floatformat:0 }} — hệ thống sẽ nhận webhook y hệt như giao dịch thật.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const orderId = "{{ order.id }}";
+    const checkStatusUrl = "{% url 'check_order_status' order.id %}";
+
+    const checkPaymentStatus = setInterval(async () => {
+        try {
+            const response = await fetch(checkStatusUrl);
+            const data = await response.json();
+
+            if (data.status === 'Chờ lấy hàng') {
+                clearInterval(checkPaymentStatus);
+                document.getElementById('status-message').innerHTML =
+                    '<h4 class="text-success"><i class="fa fa-check-circle"></i> Thanh toán thành công!</h4><p>Đang chuyển hướng...</p>';
+
+                setTimeout(() => {
+                    window.location.href = "{% url 'payment_success' %}?order_id=" + orderId + "&method=SePay";
+                }, 2000);
+            } else if (data.status === 'Đã hủy') {
+                clearInterval(checkPaymentStatus);
+                document.getElementById('status-message').innerHTML =
+                    '<h4 class="text-danger"><i class="fa fa-times-circle"></i> Giao dịch đã bị hủy.</h4>';
+            }
+        } catch (error) {
+            console.error("Lỗi kiểm tra trạng thái:", error);
+        }
+    }, 3000);
+</script>
+{% endblock %}

@@ -13,5 +13,6 @@ urlpatterns = [
     path('vnpay_return', views.vnpay_return), # Fallback cho VNPay redirect không dấu /
     path('momo_return/', views.momo_return, name='momo_return'),
     path('momo_ipn/', views.momo_ipn, name='momo_ipn'),
+    path('sepay_webhook/', views.sepay_webhook, name='sepay_webhook'),
     path('check_order_status/<int:order_id>/', views.check_order_status, name='check_order_status'),
 ]

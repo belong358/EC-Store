@@ -17,3 +17,6 @@ __pycache__/
 
 # Ảnh sản phẩm/banner do người dùng tải lên khi chạy web (dữ liệu runtime, không phải mã nguồn)
 uploads/
+
+# File dump dữ liệu (dùng tạm khi export/import giữa các database, không phải mã nguồn)
+data.json

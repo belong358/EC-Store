@@ -60,6 +60,7 @@ class Order(models.Model):
         ('Stripe', 'Thanh toán qua Stripe (Thẻ Quốc tế)'),
         ('VNPay', 'Thanh toán qua VNPay (Ngân hàng Nội địa)'),
         ('MoMo', 'Thanh toán qua Ví MoMo'),
+        ('SePay', 'Thanh toán qua QR Ngân hàng (SePay)'),
     )
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     code = models.CharField(max_length=5, editable=False)

@@ -24,7 +24,7 @@ Website thương mại điện tử chuyên bán laptop và phụ kiện máy t�
 | **Database** | SQLite |
 | **Xác thực** | django-allauth (Email, Google OAuth2) |
 | **API / JWT** | Django REST Framework + Simple JWT + dj-rest-auth (đăng nhập Google qua API) |
-| **Thanh toán** | Stripe, VNPay, MoMo, COD |
+| **Thanh toán** | Stripe, VNPay, MoMo, SePay (QR chuyển khoản ngân hàng), COD |
 | **AI** | Google Gemini API + ChromaDB (RAG chatbot tư vấn sản phẩm) |
 | **Khác** | django-ckeditor (rich text), django-mptt (danh mục cây), django-cors-headers |
 
@@ -36,7 +36,7 @@ Website thương mại điện tử chuyên bán laptop và phụ kiện máy t�
 - Xem, tìm kiếm sản phẩm với gợi ý tự động (autocomplete kèm ảnh/giá)
 - Lọc sản phẩm theo danh mục, khoảng giá
 - Giỏ hàng, đặt hàng, theo dõi trạng thái đơn hàng
-- Thanh toán qua **Stripe / VNPay / MoMo / COD**
+- Thanh toán qua **Stripe / VNPay / MoMo / SePay (QR chuyển khoản ngân hàng) / COD**
 - Đăng ký, đăng nhập bằng Email hoặc liên kết Google
 - Đánh giá, bình luận sản phẩm
 - **Chatbot AI** tư vấn sản phẩm theo nhu cầu (tích hợp Gemini + RAG)
@@ -99,8 +99,10 @@ elestore/
 - [`order/templates/Order_Form.html`](order/templates/Order_Form.html) — giao diện đặt hàng, thanh toán
 - [`order/templates/shopcart_products.html`](order/templates/shopcart_products.html) — giao diện giỏ hàng
 - [`order/templates/Order_completed.html`](order/templates/Order_completed.html) — giao diện sau khi thanh toán thành công
+- [`order/templates/Sepay_QR_Payment.html`](order/templates/Sepay_QR_Payment.html) — giao diện hiển thị mã QR chuyển khoản SePay
 - [`order/models.py`](order/models.py) — cấu trúc dữ liệu đơn hàng, phương thức thanh toán
 - [`order/views.py`](order/views.py) — xử lý logic giỏ hàng, đặt hàng, tích hợp cổng thanh toán
+- [`order/sepay.py`](order/sepay.py) — sinh URL ảnh QR VietQR động và xác thực webhook từ SePay
 
 </details>
 
@@ -175,6 +177,7 @@ Chi tiết từng nhóm biến trong `.env`:
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | ✅ Có (nếu muốn dùng chatbot AI) | Xem cách lấy bên dưới |
 | `VNP_TMN_CODE`, `VNP_HASH_SECRET` | Không* | Chỉ cần nếu muốn test thanh toán VNPay, đăng ký sandbox tại [VNPay Sandbox](https://sandbox.vnpayment.vn/devreport/) |
 | `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY` | Không | Có thể giữ nguyên bộ test công khai của MoMo (xem mục [Tài khoản test](#-tài-khoản-test)) |
+| `SEPAY_ACCOUNT_NUMBER`, `SEPAY_BANK_NAME`, `SEPAY_API_KEY`, `SEPAY_PREFIX` | Không* | Chỉ cần nếu muốn test thanh toán QR chuyển khoản ngân hàng qua [SePay](https://sepay.vn) — cần đăng ký tài khoản, liên kết ngân hàng và tạo Webhook (xem hướng dẫn bên dưới) |
 | `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` | Không | Giữ mặc định nếu chỉ chạy local, không public qua domain/ngrok |
 
 *Không* = có thể để trống, tính năng liên quan sẽ không hoạt động nhưng không làm sập toàn bộ website.
@@ -205,6 +208,18 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 5. Biến `EMAIL_HOST_USER` điền đúng địa chỉ Gmail đã tạo App Password ở bước trên
 
 > Nếu không cần test gửi email thật, có thể để trống 2 biến này — hệ thống sẽ tự in nội dung email xác nhận (kèm link kích hoạt tài khoản) ra terminal khi chạy `python manage.py runserver`, vẫn test được luồng đăng ký/xác nhận email bình thường mà không cần cấu hình Gmail.
+
+**Cách lấy cấu hình `SEPAY_*`** *(chỉ cần nếu muốn test thanh toán QR chuyển khoản ngân hàng qua SePay)*:
+
+1. Đăng ký tài khoản tại [my.sepay.vn](https://my.sepay.vn), chọn gói **"Chỉ cần chia sẻ biến động số dư"**
+2. Vào mục **Ngân hàng** → liên kết 1 tài khoản ngân hàng cá nhân qua API (một số ngân hàng như MB Bank, Vietcombank hỗ trợ liên kết trực tiếp, không cần giấy phép kinh doanh)
+3. `SEPAY_ACCOUNT_NUMBER` = số tài khoản vừa liên kết, `SEPAY_BANK_NAME` = tên ngân hàng (VD: `MBBank`)
+4. Vào mục **Tích hợp Webhook** → tạo Webhook mới, ở bước **Bảo mật** chọn phương thức **API Key** rồi **tự đặt** 1 chuỗi bất kỳ làm khóa (VD: `elestore_sepay_2026_xK9p`) → dán chuỗi đó vào `SEPAY_API_KEY`
+5. `SEPAY_PREFIX` giữ mặc định `DH` — đây là tiền tố được chèn vào nội dung chuyển khoản để đối chiếu đúng mã đơn hàng
+
+> ⚠️ **Cần chạy được webhook cục bộ (local)**: vì SePay cần gọi được vào server Django của bạn qua Internet, trong khi `localhost:8000` chỉ chạy trên máy — cần dùng công cụ như [ngrok](https://ngrok.com) để tạo đường hầm public tạm thời (`ngrok http 8000`). Lấy link ngrok hiện ra (dạng `https://xxxx.ngrok-free.dev`) và **thêm đúng đuôi `/order/sepay_webhook/` vào cuối** để có URL Webhook đầy đủ (VD: `https://xxxx.ngrok-free.dev/order/sepay_webhook/`) — dán chính xác URL đầy đủ này vào ô Webhook URL trên SePay, **không dán riêng link ngrok gốc** (nếu thiếu đuôi, SePay sẽ gọi nhầm vào trang chủ, không tới đúng chỗ xử lý, dẫn tới lỗi). Đồng thời thêm domain ngrok đó vào `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` trong `.env`. Link `ngrok` miễn phí sẽ đổi mỗi lần khởi động lại, cần cập nhật lại cả `.env` lẫn URL Webhook trên SePay sau mỗi lần restart.
+>
+> Để test không cần tiền thật: bật **"Test mode"** trên my.sepay.vn, tạo lại 1 Webhook riêng trong chế độ này, rồi dùng tính năng **"Mô phỏng giao dịch"** (điền đúng số tiền + nội dung chuyển khoản hiện trên trang QR của đơn hàng) để giả lập webhook mà không cần chuyển khoản thật.
 
 ### 5. Áp dụng migrations cho database
 
@@ -293,6 +308,7 @@ docker-compose exec web python index_rag.py
 
 - **MoMo**: sử dụng bộ tài khoản test sandbox công khai theo tài liệu tích hợp của MoMo
 - **Stripe**: sử dụng [thẻ test của Stripe](https://docs.stripe.com/testing)
+- **SePay**: bật **Test mode** trên my.sepay.vn rồi dùng tính năng **"Mô phỏng giao dịch"** — không cần thẻ hay tài khoản test riêng, chỉ cần điền đúng số tiền và nội dung chuyển khoản hiện trên trang QR của đơn hàng
 
 ---
 

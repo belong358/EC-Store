@@ -19,6 +19,7 @@ from product.models import Category, Product, get_categories
 from user.models import UserProfile
 from order.vnpay import vnpay
 from order.momo import MoMoPayment
+from order import sepay
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
@@ -397,6 +398,17 @@ def orderproduct(request):
                     messages.error(request, f"Lỗi MoMo: {response.get('message')}")
                     return HttpResponseRedirect("/order/orderproduct")
 
+            elif payment_method == 'SePay':
+                transfer_content = sepay.build_transfer_content(ordercode)
+                qr_image_url = sepay.build_qr_image_url(total, transfer_content)
+                return render(request, 'Sepay_QR_Payment.html', {
+                    'order': data,
+                    'category': category,
+                    'setting': setting,
+                    'qr_image_url': qr_image_url,
+                    'transfer_content': transfer_content,
+                })
+
             else: # COD
                 # Thanh toán khi nhận hàng, hoàn tất luôn hoặc chờ xác nhận
                 confirm_order_paid(data)
@@ -590,6 +602,47 @@ def momo_ipn(request):
             return JsonResponse({"message": "Received"}, status=200)
             
     return JsonResponse({"message": "Invalid request"}, status=400)
+
+@csrf_exempt
+def sepay_webhook(request):
+    """
+    SePay gọi POST tới đây mỗi khi tài khoản ngân hàng liên kết nhận được
+    tiền (kể cả giao dịch "giả lập" khi test trên dashboard SePay).
+    Xác thực bằng API Key, đối chiếu nội dung chuyển khoản với mã đơn hàng,
+    kiểm tra đúng số tiền rồi mới xác nhận — tránh 1 giao dịch chuyển khoản
+    bất kỳ (không phải mua hàng) vô tình xác nhận nhầm đơn.
+    """
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
+
+    if not sepay.verify_webhook_auth(request):
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    import json
+    try:
+        data = json.loads(request.body)
+    except (ValueError, TypeError):
+        return JsonResponse({"success": False, "message": "Invalid payload"}, status=400)
+
+    # Chỉ xử lý giao dịch tiền VÀO (transferType == 'in'), bỏ qua tiền ra
+    if data.get('transferType') != 'in':
+        return JsonResponse({"success": True, "message": "Ignored (not incoming)"}, status=200)
+
+    order_code = sepay.extract_order_code_from_content(data.get('content'))
+    if order_code:
+        try:
+            order = Order.objects.get(code=order_code, payment_method='SePay')
+            # Đối chiếu đúng số tiền chuyển khoản khớp với tổng đơn hàng,
+            # tránh xác nhận nhầm nếu nội dung dò được trùng nhưng số tiền khác.
+            if int(data.get('transferAmount', 0)) >= int(order.total):
+                confirm_order_paid(order)
+        except Order.DoesNotExist:
+            pass
+
+    # Luôn trả 200 + success:true kể cả khi không khớp đơn nào — SePay yêu cầu
+    # đúng field "success": true trong body để coi là gửi webhook thành công,
+    # tránh SePay hiểu nhầm là lỗi rồi liên tục gọi lại (retry).
+    return JsonResponse({"success": True, "message": "Received"}, status=200)
 
 @login_required(login_url='/login')
 def check_order_status(request, order_id):
