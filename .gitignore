@@ -4,7 +4,7 @@
 # Chặn thư mục dữ liệu cơ sở dữ liệu của ChromaDB
 chroma_db/
 # Database files
-db.sqlite3
+#db.sqlite3
 db.sqlite3test
 dbtest.sqlite3
 
